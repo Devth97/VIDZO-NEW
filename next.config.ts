@@ -3,7 +3,7 @@ import type { NextConfig } from 'next';
 const config: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ['@electric-sql/pglite', 'pg'],
-  output: 'standalone',
+  output: process.env.VIDZO_PLATFORM === 'cloudflare' ? undefined : 'standalone',
   async headers() {
     return [{ source: '/(.*)', headers: [
       { key: 'X-Content-Type-Options', value: 'nosniff' },

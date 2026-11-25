@@ -64,7 +64,7 @@ export function capabilities(): Capabilities {
   if (m === 'demo') return { database: false, auth: false, storage: false, analysis: false, generation: false, payments: false, assembly: false, pricing: false };
   if (m === 'local') return { database: true, auth: true, storage: true, analysis: true, generation: true, payments: true, assembly: true, pricing: true };
   return {
-    database: Boolean(live.databaseUrl()), auth: Boolean(live.supabaseUrl() && live.supabaseKey()), storage: Boolean(live.r2()),
+    database: Boolean(live.databaseUrl() || env('VIDZO_DATABASE_BINDING') === 'hyperdrive'), auth: Boolean(live.supabaseUrl() && live.supabaseKey()), storage: Boolean(live.r2()),
     analysis: Boolean(live.gemini()), generation: Boolean(live.fal()), payments: Boolean(live.razorpay()), assembly: Boolean(live.worker()),
     pricing: Boolean(livePricing()),
   };

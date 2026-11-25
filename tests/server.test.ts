@@ -119,6 +119,41 @@ describe('credit ledger (SQL functions)', () => {
 });
 
 describe('tenant isolation (RLS)', () => {
+  it('reports database readiness without exposing connection details', async () => {
+    const { GET } = await import('@/app/api/health/route');
+    const response = await GET();
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(await response.json()).toEqual({ status: 'ok' });
+  });
+
+  it('fails readiness without exposing a database error or credential', async () => {
+    const { GET } = await import('@/app/api/health/route');
+    setTestDb({ ...db, query: async () => { throw new Error('private database connection detail'); } });
+    try {
+      const response = await GET();
+      expect(response.status).toBe(503);
+      expect(await response.json()).toEqual({ status: 'unavailable' });
+    } finally { setTestDb(db); }
+  });
+
+  it('blocks both API roles from every credit mutation under hosted Supabase defaults', async () => {
+    const functions = await db.query<{ name: string; anonymous: boolean; signed_in: boolean }>(`
+      select p.proname as name,
+        has_function_privilege('anon', p.oid, 'execute') as anonymous,
+        has_function_privilege('authenticated', p.oid, 'execute') as signed_in
+      from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public' and p.proname in ('wallet_reserve', 'wallet_finalize', 'payment_capture')
+    `);
+    expect(functions).toHaveLength(3);
+    for (const fn of functions) expect(fn, fn.name).toMatchObject({ anonymous: false, signed_in: false });
+    const [membership] = await db.query<{ anonymous: boolean; signed_in: boolean }>(`
+      select has_function_privilege('anon', 'public.is_member(uuid)', 'execute') as anonymous,
+        has_function_privilege('authenticated', 'public.is_member(uuid)', 'execute') as signed_in
+    `);
+    expect(membership).toEqual({ anonymous: false, signed_in: true });
+  });
+
   it('members read only their own workspace rows and cannot write directly', async () => {
     const a = await user('a@example.test'), b2 = await user('b@example.test');
     const pa = await repo.createProject(db, a, 'A'), pb = await repo.createProject(db, b2, 'B');

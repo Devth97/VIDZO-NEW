@@ -2,7 +2,7 @@
 
 Reference-to-original advertising studio for brands and agencies: turn an authorized reference concept into a distinct 10–15 s vertical ad with your real product, exact logo and original characters, approving every frame before spending.
 
-**Status: beta codebase, not deployed.** The web app, backend APIs, database schema, credit ledger, payment verification, admin review and the full creation flow are implemented and tested locally. Real AI providers, payments, email and hosting are **not connected yet**: they need service accounts. See [handoff/VERIFICATION.md](handoff/VERIFICATION.md) for exactly what was tested, and [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) for the architecture.
+**Status: beta deployment.** The app is published on [Cloudflare Workers](https://vidzo-studio.promptpacktech.workers.dev), and the hosted Supabase database is provisioned. Custom-domain activation and a complete Google login still need verification. Real AI providers, private media storage, payments and media assembly remain disabled until configured. See [handoff/VERIFICATION.md](handoff/VERIFICATION.md) for exactly what was tested, [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) for the architecture and [deployment setup](docs/DEPLOYMENT.md) for hosting, secrets and DNS.
 
 ## Run
 

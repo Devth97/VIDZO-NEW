@@ -1,0 +1,62 @@
+# VIDZO hosting and Supabase
+
+## Current deployment
+
+- App: `https://vidzo-studio.promptpacktech.workers.dev` on the owner's personal Cloudflare account.
+- Production origin: `https://vidzo.tech`; its new personal-account DNS zone is pending activation.
+- Supabase project: `vidzoauth` (`pehaquzsqeiocjirogei`), with 15 application tables and RLS enabled on all of them.
+- Mode: `live`. Unconfigured storage, AI, payments, pricing and assembly fail closed; this deployment does not enable simulated paid services.
+- Basic Cloudflare setup selected by the owner: no shared response/data cache and no Cloudflare image optimization.
+
+The Worker uses vinext alongside the existing Next.js setup. Node/Next commands still work; the Cloudflare wrapper disables Node standalone output only for the Workers build. Worker types use a separate TypeScript configuration to avoid replacing browser types in the Next.js project.
+
+## Deployment through GitHub
+
+`.github/workflows/deploy.yml` verifies types, unit/integration tests, the production dependency audit, the Next.js build and the Workers build. Pushes to `main` deploy only after verification; pull requests verify without deployment secrets. After deployment, the workflow checks `/api/health`, which executes a database readiness query and returns no identifiers or credentials.
+
+GitHub repository secrets:
+
+- `CLOUDFLARE_API_TOKEN`: account-owned token scoped to Workers script deployment and Hyperdrive read access on the personal account, expiring 25 November 2027. Renew before expiry.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: the project's publishable key.
+
+The Supabase publishable key is uploaded through an ignored JSON file. The database password is held by Hyperdrive and is not required by GitHub or the app Worker. The account ID is pinned in `cloudflare.config.ts`. Local deployments remove inherited company API credentials and explicitly select the `vidzo-personal` OAuth profile. CI uses the dedicated repository token.
+
+```powershell
+pnpm install --frozen-lockfile
+pnpm typecheck
+pnpm test
+pnpm build:vinext
+pnpm typecheck:cloudflare
+pnpm deploy:vinext --dry-run
+```
+
+Local deployment requires the ignored `.env.local` file with `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Node-based live development additionally uses `DATABASE_URL`. Never commit this file, `.data/`, `.cloudflare/`, generated output, customer media or API credentials.
+
+## Database migrations and TLS
+
+The initial migration and `20261125010000_hosted_permissions.sql` were applied to the hosted project. Hosted migration versions match the source filenames. Never apply `supabase/local`; it only supplies the embedded test database's auth schema and roles.
+
+Supabase's hosted default privileges grant function execution explicitly to `anon` and `authenticated`. The follow-up migration revokes those grants from the three credit/payment mutation functions, in addition to PUBLIC. It also pins trigger search paths and improves two RLS predicates. Local tests reproduce the hosted default grants so this difference stays covered.
+
+The signed-in `is_member` helper intentionally remains callable for tenant-read policies. The three operational tables with no client policies intentionally deny browser access. Those informational/intentional advisor findings are not reasons to grant browser access to admin data.
+
+Database TLS verifies certificates and hostnames. The official public Supabase CA is bundled in `src/lib/server/supabase-ca.ts`; it is a public trust anchor, not a private key. Connection-string TLS parameters cannot override verification. The certificate fingerprint is `80:70:25:AD:50:D4:ED:21:9D:2C:9C:7D:29:9C:00:4F:82:4E:B0:0C:F7:F6:5A:FE:F6:07:D0:7B:72:E6:CA:FA`, expiring 26 April 2031. Obtain rotations from the official Supabase dashboard/source, never from the unverified server being connected to.
+
+Cloudflare uses the `vidzo-supabase` Hyperdrive configuration (`1cb835e255244016b66acd64f1da19ca`) with the official CA uploaded, `verify-full`, query caching disabled and a five-connection origin limit. It connects to the project's direct Postgres endpoint. The free Hyperdrive allowance applies; no paid plan was activated. Workers cannot use the Node driver's custom-CA path directly, so Vite selects `db-cloudflare.ts` in place of the Node hosted implementation. Each operation gets a fresh client, and transactions retain one client until commit/rollback; no sockets are reused across Worker requests. Hyperdrive owns the upstream pool. Local Cloudflare development explicitly uses the remote binding and therefore the live database; `pnpm dev:local` remains the isolated simulated test backend.
+
+## Pending custom-domain activation
+
+The domain currently uses `ace.ns.cloudflare.com` and `ollie.ns.cloudflare.com` in another account. The personal account's free zone was assigned:
+
+```text
+art.ns.cloudflare.com
+tegan.ns.cloudflare.com
+```
+
+Before changing nameservers at Hostinger, preserve any existing mail, verification and other required DNS records from the old zone. Then activate the personal zone and attach `vidzo.tech` as a Worker Custom Domain (the typed config supports `domains: ["vidzo.tech"]`). Verify HTTPS and `/api/health` on the custom domain before calling it live. Domain attachment through the workflow may require adding narrowly scoped zone/domain permissions to its deployment token.
+
+Supabase's Site URL and redirect allow list are already set by the owner for `https://vidzo.tech`. Keep `APP_ORIGIN` aligned with that origin. The workers.dev address is useful for checking the site, but a complete Google login redirects to the production origin. Do not claim an end-to-end Google login has passed until DNS/domain activation and an actual sign-in succeed.
+
+## Rollback
+
+Redeploy the prior known-good Cloudflare Worker version or revert the relevant Git commit and push `main`. Preserve the Supabase schema and data during application rollback; do not reset the database. If readiness fails after deploy, inspect the failing GitHub run and Cloudflare logs without copying credentials into logs or chat. AI generation, payments, R2 uploads, background orchestration and FFmpeg assembly remain separate release gates.

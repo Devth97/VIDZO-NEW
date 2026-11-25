@@ -33,4 +33,4 @@ Live sign-in uses Google through Supabase (`POST /api/auth/google` → PKCE call
 - FFmpeg media worker service (`services/media-worker`): the adapter contract exists in `providers/worker.ts`.
 - Background runner for live mode: jobs advance in `after()` and on every poll; a Cloudflare Cron/Queue consumer (or Trigger.dev) should call `advanceJob` for production reliability.
 - Playwright E2E/axe specs, CI workflow, Lighthouse runs, CSP header.
-- Hosting adapter/config (no host selected or deployed).
+- Custom-domain activation and end-to-end hosted Google sign-in verification. The basic Workers deployment and GitHub workflow now exist; see `docs/DEPLOYMENT.md`.

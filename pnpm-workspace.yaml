@@ -1,6 +1,9 @@
 packages:
   - '.'
+overrides:
+  'fflate@<0.7.5': '0.7.5'
 allowBuilds:
   esbuild: true
   sharp: true
   protobufjs: false
+  workerd: true

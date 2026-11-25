@@ -12,6 +12,9 @@ end $$;
 grant usage on schema public, auth to anon, authenticated;
 grant execute on function auth.uid() to anon, authenticated;
 alter default privileges in schema public grant select on tables to anon, authenticated;
+-- Hosted Supabase grants these explicitly, separately from PostgreSQL's PUBLIC default.
+-- Mirror that behavior so tests catch incomplete server-only function revocations.
+alter default privileges in schema public grant execute on functions to anon, authenticated;
 
 -- Single-use, hashed sign-in tokens for the local email sign-in flow.
 create table if not exists public.local_auth_tokens (

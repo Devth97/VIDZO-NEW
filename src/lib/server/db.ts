@@ -3,6 +3,7 @@ import { readdirSync, readFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { dataDir, live, mode } from './config';
 import { HttpError } from './errors';
+import { createHostedDb, cacheHostedDb } from './db-hosted';
 
 export interface Queryable { query<T = Record<string, unknown>>(text: string, params?: unknown[]): Promise<T[]> }
 export interface Db extends Queryable { tx<T>(fn: (q: Queryable) => Promise<T>): Promise<T>; close?(): Promise<void> }
@@ -42,24 +43,6 @@ export async function createPgliteDb(dir?: string): Promise<Db> {
   };
 }
 
-async function createPgDb(url: string): Promise<Db> {
-  const { Pool } = await import('pg');
-  const pool = new Pool({ connectionString: url, max: 5, ssl: url.includes('localhost') ? undefined : { rejectUnauthorized: true } });
-  return {
-    query: async <T,>(text: string, params?: unknown[]) => (await pool.query(text, params)).rows as T[],
-    tx: async <T,>(fn: (q: Queryable) => Promise<T>) => {
-      const client = await pool.connect();
-      try {
-        await client.query('begin');
-        const result = await fn({ query: async <R,>(text: string, params?: unknown[]) => (await client.query(text, params)).rows as R[] });
-        await client.query('commit');
-        return result;
-      } catch (e) { await client.query('rollback').catch(() => undefined); throw e; } finally { client.release(); }
-    },
-    close: () => pool.end(),
-  };
-}
-
 const g = globalThis as unknown as { __vidzoDb?: Promise<Db>; __vidzoTestDb?: Db };
 
 /** Tests inject an in-memory database here. */
@@ -70,9 +53,8 @@ export async function getDb(): Promise<Db> {
   const m = mode();
   if (m === 'local') return (g.__vidzoDb ??= createPgliteDb(path.join(dataDir(), 'pglite')));
   if (m === 'live') {
-    const url = live.databaseUrl();
-    if (!url) throw new HttpError(503, 'The workspace database is not configured yet.', 'not_configured');
-    return (g.__vidzoDb ??= createPgDb(url));
+    if (!cacheHostedDb) return createHostedDb(live.databaseUrl());
+    return (g.__vidzoDb ??= createHostedDb(live.databaseUrl()));
   }
   throw new HttpError(404, 'Server workspaces are not available in demo mode.', 'demo_mode');
 }

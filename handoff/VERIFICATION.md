@@ -1,5 +1,16 @@
 # Verification log
 
+## 25 November 2026 — hosted database and Cloudflare (Codex)
+
+- Connected the owner's existing `vidzoauth` Supabase project through its connector. Applied the initial schema and hosted-permission hardening migration; all 15 tables have RLS enabled. Verified anonymous and signed-in API roles cannot execute any credit/payment mutation function. The local auth stub now mirrors Supabase's explicit default function grants.
+- Verified the privately saved pooler connection against hosted Postgres over strict TLS using Supabase's official CA; 15 tables and 15 RLS protections confirmed. Secrets remain in ignored local files and encrypted deployment settings, not Git.
+- Added a basic vinext/Cloudflare build alongside Next.js. The owner selected no shared response/data cache and no image optimization. The personal Cloudflare account is pinned; inherited company API credentials are removed for local deployments.
+- Published the app at `https://vidzo-studio.promptpacktech.workers.dev`. Confirmed HTTPS homepage/sign-in/session responses, unauthenticated workspace rejection, the real Google OAuth initiation URL, PKCE cookie and production callback. Viewed the published Google sign-in page in Chrome. This verifies OAuth initiation, not completion of Google consent or production-domain login.
+- 67 tests pass, both TypeScript configurations pass, Next.js and Cloudflare builds pass. The production dependency audit reports no known vulnerabilities after updating Vite and pinning the patched fflate dependency. Added regression tests for strict TLS, hosted function privileges and database readiness.
+- The Worker readiness probe exposed a runtime-specific TLS failure that did not appear in Node. Configured Hyperdrive with Supabase's official CA, `verify-full`, caching disabled and five origin connections; added a Worker-specific client lifecycle that preserves transactions without sharing sockets across requests. Three successive hosted `/api/health` requests return HTTP 200 with `status: ok`.
+- Added GitHub verification/deployment with repository secrets and a scoped personal-account deployment token. The workflow checks hosted database readiness after publishing. Its first run still requires final confirmation.
+- The personal account's free `vidzo.tech` zone is pending nameserver activation. Existing nameservers remain unchanged; production-domain login is not yet verified. See `docs/DEPLOYMENT.md` for the exact remaining DNS and release steps. AI, R2, real payments, background runner and FFmpeg remain unconfigured/incomplete.
+
 ## 25 November 2026 — Google sign-in (Codex)
 
 - Live sign-in now uses Google through Supabase; local test links remain local. No hosted Supabase or Google Cloud project was created, connected or changed, and no company account was used. The owner explicitly excludes `@prorack.ai` accounts from VIDZO infrastructure ownership.
