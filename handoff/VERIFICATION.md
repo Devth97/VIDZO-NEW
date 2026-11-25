@@ -1,5 +1,13 @@
 # Verification log
 
+## 25 November 2026 — Google sign-in (Codex)
+
+- Live sign-in now uses Google through Supabase; local test links remain local. No hosted Supabase or Google Cloud project was created, connected or changed, and no company account was used. The owner explicitly excludes `@prorack.ai` accounts from VIDZO infrastructure ownership.
+- Typecheck passes; 61 tests pass across 5 files (16 new auth/UI tests). The real Supabase SDK generates the Google authorization URL and PKCE cookie; callback tests use simulated token responses to verify session cookies, draft return and rejected-code handling. Covered: consent gating, cross-site initiation, external return paths, mode restrictions and missing origin. A deliberately inverted consent condition was caught by its regression test, then restored.
+- Production build passes with the Google route included. Production dependency audit reports no known vulnerabilities.
+- Real headless Chrome at 360 px: local sign-in form, required consent, keyboard submission, saved draft return payload, honest local-link copy and no horizontal overflow; axe WCAG A/AA audit on the sign-in panel passes, no uncaught page errors. Email endpoint response was intercepted, so this did not create an account or send email. Live UI rendering is covered by component tests.
+- **Not verified:** real Google consent, hosted Supabase provider settings, hosted callback/cookie delivery and live workspace creation. Requires the user's approved personal account and configured project. See `docs/GOOGLE_SIGN_IN.md`.
+
 ## 25 November 2026 — backend, screens and browser QA (Claude)
 
 | Check | Result |

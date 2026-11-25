@@ -24,4 +24,6 @@ pnpm build
 
 Live mode (`VIDZO_MODE=live`) needs the variables in [.env.example](.env.example); each capability stays disabled until configured. Apply `supabase/migrations` to the Supabase project. Never apply `supabase/local`.
 
+Live sign-in uses **Continue with Google through Supabase**. Follow [Google sign-in setup](docs/GOOGLE_SIGN_IN.md) to configure the provider and callback URLs. Sign-in does not require an email sender. The Google client secret belongs in Supabase's provider settings, never in the repository.
+
 Never commit secrets, customer media, `.data/`, dependencies or build output.
