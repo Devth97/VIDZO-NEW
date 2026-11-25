@@ -1,5 +1,7 @@
 # VIDZO — coding handoff to Claude
 
+> **Update, 25 Nov 2026 (Claude):** Items 1–8 of “Resume order” below are now implemented, along with the missing routes and the provider adapters for item 9. Read `docs/IMPLEMENTATION.md` for the current architecture and `handoff/VERIFICATION.md` for what was and was not verified. Still open: the FFmpeg media worker (item 10), a live background runner, E2E/CI (item 11), hosting, and every real service account. The text below is the original GPT handoff, kept for history; where it conflicts with those two documents, they win.
+
 Prepared 25 November 2026. Checkout: `D:\VIDZO NEW`. Repository: https://github.com/Devth97/VIDZO-NEW.git. Branch: `main`.
 
 ## Start here

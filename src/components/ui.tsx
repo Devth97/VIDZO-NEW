@@ -4,7 +4,11 @@ import { X, Sparkles } from 'lucide-react';
 
 export function Modal({ open, close, title, children }: { open: boolean; close: () => void; title: string; children: ReactNode }) {
   const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => { if (open && !ref.current?.open) ref.current?.showModal(); else if (!open && ref.current?.open) ref.current.close(); }, [open]);
+  useEffect(() => {
+    const d = ref.current; if (!d) return;
+    if (open && !d.open) { d.showModal(); d.querySelector<HTMLElement>('[data-autofocus], input:not([type=hidden]), textarea, select')?.focus(); }
+    else if (!open && d.open) d.close();
+  }, [open]);
   return <dialog ref={ref} className="modal" onCancel={close} onClose={close} aria-label={title}>
     <div className="section-head"><h2>{title}</h2><button className="icon-button" onClick={close} aria-label="Close dialog"><X size={20}/></button></div>{children}
   </dialog>;

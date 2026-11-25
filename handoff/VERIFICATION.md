@@ -1,22 +1,28 @@
-# Verification at coding handoff
+# Verification log
 
-25 November 2026, Windows local checkout `D:\VIDZO NEW`.
+## 25 November 2026 — backend, screens and browser QA (Claude)
 
 | Check | Result |
 | --- | --- |
-| `pnpm install` | Passed after explicit protobufjs postinstall decline in build policy |
-| `pnpm typecheck` | Passed |
-| `pnpm test` | Passed: 1 file, 10 tests |
-| `pnpm build` | Passed: optimized compilation, TypeScript, static generation and route collection |
-| Build routes | `/_not-found`, `/projects`, `/studio/[id]` |
-| Browser/visual/keyboard/mobile QA | Not performed |
-| Playwright/axe | Dependencies installed; test files/config not implemented |
-| Production SQL/RLS/concurrency tests | Not implemented; Supabase not connected |
-| AI/provider/payment/worker end-to-end | Not implemented, no accounts configured, no paid calls |
-| Deployment | Not performed; GitHub source push is separate |
+| `pnpm typecheck` (now `--incremental false`) | Passed. The earlier script reused a stale `tsconfig.tsbuildinfo` and could report a false pass; fixed. |
+| `pnpm test` | Passed: 3 files, 45 tests (domain 26, media parsing 9, server integration 10) |
+| `pnpm build` | Passed: 13 pages, 27 API routes and the auth callback |
+| Server integration tests | Run against **PGlite** (embedded Postgres) using the real `supabase/migrations` SQL: ledger reserve/finalize/capture functions, append-only trigger, non-negative balances, RLS two-tenant isolation with the `authenticated` role, asset immutability, optimistic concurrency, forged-field rejection, upload byte verification, full frames→approve→clips→export→QA flow, failure release, unknown-outcome reconciliation, free-analysis limit, webhook signature/duplicate/replay/amount-mismatch/out-of-order handling |
+| Browser QA, local backend (`pnpm dev:local`) | Passed in a real Chromium pane: email link sign-in, zero-credit start, project creation (keyboard), real 6.5 s H.264 MP4 recorded in-browser and verified server-side from bytes, signed private preview playback, analysis job, roles, 250-credit purchase via signed test webhook, identity sheets (double-click → one reservation), real PNG uploads + disguised file rejected, brief, frames, approvals, selective invalidation (only edited scene lost approval; revert restored it), clips, assembly, download blocked (403) before QA, admin reject requires note, approve → download with attachment + sandbox CSP |
+| Browser QA, explore mode (`pnpm dev`) | Passed: v1 draft migration (old approvals not trusted), sample project end to end, simulated 300→165 credits, no console errors |
+| Responsive | No page-level horizontal overflow at 360 px on landing, pricing, projects, studio, admin (wide admin tables scroll inside their container); tablet 768 px studio checked. Fixed: step badge wrapping at 360 px |
+| Bugs found and fixed in QA | Sign-in consent label contained links that navigated away on click; modal autofocus never focused (typing lost); sample entry disappeared once drafts existed |
 
-Vitest emits a non-failing warning because `vitest.config.ts` uses ESM syntax in a package without `type: module`. Resolve deliberately, not by hiding warnings. The current code also uses Google Fonts CSS import, inline style values and future API call sites; production polish/security work remains.
+### Not verified (needs your accounts or infrastructure)
 
-Unit tests were written first and initially failed because the domain implementation did not exist; they passed after implementation. The suite is small and does not establish complete app correctness. Domain/helper checks do not prove PostgreSQL atomicity or provider idempotency.
+- Supabase Auth email delivery, `/auth/callback` code exchange, and the migration on a real Supabase project (only run on PGlite). True multi-connection lock contention (PGlite is single-connection).
+- R2 presigned PUT/GET, CORS, ranged reads.
+- Gemini analysis, fal submissions/results, media worker assembly. Adapters typecheck and are unit-shaped, but **no provider call has been made**. The fal input mapping must be checked against the selected endpoint's schema.
+- Razorpay order creation, Checkout, and real webhook delivery.
+- Fragmented MP4s whose `mvhd` duration is 0 would be rejected (Chrome's own recordings carry a real duration and pass). Full decode/corrupt-frame checks belong to the FFmpeg worker, which is **not written yet**.
+- Lighthouse/axe automated audits and Playwright E2E specs are not written; QA above was interactive.
+- No hosting deployment exists.
 
-No development server was left running. No screenshots, real generated outputs or deployment artifacts are included. Source DOCX files were copied unchanged; Markdown extracts were produced from paragraph text without executing document contents.
+## Earlier handoff (GPT)
+
+Foundation passed typecheck/test/build with 10 tests; no browser QA had been done.

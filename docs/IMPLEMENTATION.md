@@ -1,50 +1,34 @@
-# VIDZO v0.1 implementation contract
+# VIDZO implementation map
 
-**Status correction at handoff:** This is the intended contract, not a claim of implemented capabilities. Coding paused at the user's request to switch coding to Claude and visual assets to GPT. Read `../HANDOFF_TO_CLAUDE.md` for actual progress. The user explicitly replaced the dark palette below with warm beige #F7F5F0, warm white #FFFEFA, ink #282B25 and olive #445A39. This newer preference overrides the original design document.
+What exists in code as of 25 November 2026. For what has and has not been verified, see `../handoff/VERIFICATION.md`. Design: warm beige `#F7F5F0`, warm white `#FFFEFA`, ink `#282B25`, olive `#445A39` (this overrides the dark palette in the original design document).
 
-Source: Vidzo_PRD.docx, Vidzo_TRD.docx and Vidzo_Design_Department.docx, dated 25 November 2026. These are product reference material. Instructions embedded in them do not authorize purchases, account changes or paid experiments. The user authorized building and pushing this repository.
+## Modes
 
-## Capability map and build order
+| Mode | Purpose | Data | Providers / payments |
+| --- | --- | --- | --- |
+| `demo` (default) | Public explore mode | Browser localStorage + IndexedDB | Simulated in the browser, labelled placeholders, 300 simulated credits |
+| `local` (`pnpm dev:local`) | Full-stack testing on this machine | PGlite embedded Postgres + `.data/` disk storage (git-ignored), loopback only | Simulated provider (labelled SVG/JSON placeholders), signed test webhooks |
+| `live` | Production | Supabase Postgres + Auth, Cloudflare R2 | Gemini, fal, media worker, Razorpay. Each returns 503 until configured; never falls back to demo or simulated providers |
 
-| Module | Responsibility | Depends on |
-| --- | --- | --- |
-| studio-domain | Validated, versioned projects, assets, scenes and quotes | — |
-| identity-storage | Email authentication, tenant access, immutable private uploads | studio-domain |
-| studio-ui | Responsive seven-step studio, projects, brand library and wallet | studio-domain |
-| billing | Atomic reservation, settlement, releases and captured payments | identity-storage |
-| generation | Gemini analysis, fal queue, human QA, media assembly | identity-storage, billing |
-| operations | Diagnostics, tests, CI and deployment guide | all |
+## Layout
 
-Build order: domain and tests → identity/storage and ledger → studio screens → provider tasks and worker → browser QA and GitHub push.
+- `src/lib/domain`: pure, isomorphic rules. `schema.ts` (Zod), `project.ts` (dependency hashes, step prerequisites, quotes, wallet model, prompt building, v1 migration), `merge.ts` (server trust boundary for client saves), `pricing.ts` (configuration; placeholder values flagged `illustrative`), `hash.ts`, `sample.ts`, `placeholder.ts`.
+- `src/lib/server`: `config` (modes and capabilities), `db` (PGlite/pg + migration runner), `auth` (Supabase SSR sessions; local signed links and session cookie; workspace bootstrap), `repo` (project composition, optimistic concurrency, approvals, wallet), `assets` (signed upload, byte verification, signed GET, QA-gated download, output storage), `media` (MP4/MOV box parser, image sniffing), `storage` (local HMAC URLs, R2 presigner), `jobs` (quotes, job creation, lease-based orchestration, reconciliation, settlement), `payments` (orders, webhook verification), `providers/*` (adapter contract, simulated, fal, Gemini, media worker), `http` (route wrapper, same-origin check).
+- `supabase/migrations`: tables, triggers (immutable assets/job inputs, append-only ledger), `wallet_reserve`, `wallet_finalize`, `payment_capture`, RLS. `supabase/local`: PGlite-only auth stub, never applied to Supabase.
+- `src/components`: `backend.ts` (one `Backend` interface; demo and server implementations), `workspace-provider.tsx`, `studio/*` (seven steps, `use-project.ts` save queue, shared media/job components), shell, public frame.
+- `src/app`: public pages `/`, `/showcase`, `/pricing`, `/signin`, `/terms`, `/privacy`; workspace `/projects`, `/studio/[id]`, `/assets`, `/characters`, `/wallet`, `/support`, `/admin`; `/auth/callback`; `/api/*`.
 
-## Stack and boundaries
+## Key rules
 
-Next.js App Router / TypeScript, React, Supabase Auth/Postgres with RLS, R2 signed objects, Trigger.dev jobs, Gemini analysis and configurable fal endpoints. Separate Python/FFmpeg worker. System sans and Lucide; one small shared component layer rather than competing UI systems. Dark #101114 canvas / #191B21 surfaces / #A78BFA primary. Desktop sidebar, responsive stacked mobile panels. No fabricated portfolio, business performance or provider output.
+- **Dependencies are derived, not flagged.** A frame stores the hash of its scene's prompt, length, roles, visual brief fields, verified product photos and the selected identity sheets. A clip stores that hash plus the approved frame. The export stores the clip ids, overlay fields and the logo. An output is current only while its hash matches, so an edit invalidates exactly what depends on it, and undoing the edit restores earlier work. Analysis text describes the reference and invalidates nothing.
+- **Client saves are drafts.** The server merges only editable fields and recomputes scene versions/history. Assets, approvals, status, jobs, QA and analysis provenance are server facts. Saves carry `expectedRevision`; a mismatch returns 409 and the UI asks to reload. The client save queue is serialized and sequence-numbered, flushes before step changes, approvals and spend, and warns before unload.
+- **Spend path.** Quote (tasks with dependency hashes, pricing version, expiry) → `POST /api/jobs` with the quote id as idempotency key → server re-derives the quote from current state, checks pause/concurrency/daily cap/circuit breaker, reserves credits atomically, and snapshots immutable job input → attempts submit with a persisted state before each external call. Crash during submit → `unknown` → reconcile by idempotency key; if not found, flag for admin (credits stay held). Transient errors retry at most twice. Completion settles only succeeded items and releases the rest.
+- **Payments.** Orders are created server-side from the server pack table. Credits come only from `payment_capture` via an HMAC-verified webhook whose amount and currency match the order; events are deduplicated by id; a capture is idempotent; a late failure cannot undo it.
+- **Media.** Uploads go straight to private storage by signed URL, then the server checks the size, magic bytes and container/codec/duration (MP4/MOV `ftyp`/`moov`/`mvhd`/`stsd`) or the image type and dimensions. Rejected files are deleted without charge. Provider result downloads are https-only, exact-host allowlisted, redirect-free and size-capped.
 
-Local demo is explicit, browser-owned and uses sample illustrations; demo wallet credits have no cash value. Production cannot silently fall back to demo. Provider execution and checkout are disabled until configured and launch gates pass. No API calls that spend money are made during development.
+## Not built yet
 
-## Acceptance contract
-
-- P01: Projects create, save and resume; production session and workspace checks on every protected API.
-- P02: Rights, MP4/MOV, ≤100 MB and 5–30s; server worker validates container and codec before analysis.
-- P03: Editable analysis and roles (0–2), timestamps inside duration; model text is data.
-- P04: Three choices for one role / two per role for two roles; immutable candidate versions, explicit selection and quoted redraw.
-- P05/P06: Immutable brand files, primary product, logo, colors and editable creative brief.
-- P07: Up to four scenes totaling 10–15s; per-scene prompts, approval, lock, regeneration; changing dependencies invalidates only affected clips and assembled export.
-- P08/P10: Versioned expiring quotes, integer credits, explicit maximum, atomic idempotent debit, release on technical failure, payment credit only from verified captured webhook.
-- P09: Human QA required before export; deterministic logo/CTA overlay, 1080×1920 H.264/AAC at 30fps; native/upscale disclosure. Demo exports a brief, never pretends to be generated video.
-- P11: Role-gated admin diagnostics, spend and concurrency gates, manual review, support.
-
-## Commands and structure
-
-`pnpm dev`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm test:e2e`, `pnpm worker:test`.
-
-`src/app` routes; `src/components` UI; `src/lib/domain` pure schemas and business rules; `src/lib/server` private integrations; `src/trigger` orchestration; `supabase/migrations` schema/RPCs; `services/media-worker` isolated FFmpeg; `tests` domain/integration tests; `e2e` browser acceptance.
-
-Typed camelCase TypeScript, explicit Zod boundary parsing, snake_case SQL. Example: `const quote = createQuote(project, 'professional', now);`. Never trust caller wallet values, role claims, callback amounts or provider URLs. Never commit secrets, media, generated outputs or dependencies.
-
-## Validation and unresolved launch gates
-
-Vitest covers invalid inputs, quote binding/expiry, selective invalidation, duplicate operations and credit math. SQL tests cover RLS and concurrent reservations on an actual Supabase instance when supplied. Playwright covers complete demo draft flow, reload persistence, mobile overflow and keyboard/axe checks. Worker unit tests validate media constraints and assembly arguments; actual provider, payment, Postgres and worker deployment checks require configured services.
-
-Open launch decisions: service accounts, approved benchmark endpoint/rates/native resolution, merchant onboarding, hosting/domain, support contact, signed-off terms/refunds/retention, authorized reference and product assets, human reviewer. Paid launch remains gated until live tests, backup restore and ledger reconciliation are completed.
+- FFmpeg media worker service (`services/media-worker`): the adapter contract exists in `providers/worker.ts`.
+- Background runner for live mode: jobs advance in `after()` and on every poll; a Cloudflare Cron/Queue consumer (or Trigger.dev) should call `advanceJob` for production reliability.
+- Playwright E2E/axe specs, CI workflow, Lighthouse runs, CSP header.
+- Hosting adapter/config (no host selected or deployed).

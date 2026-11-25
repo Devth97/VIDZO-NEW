@@ -1,21 +1,20 @@
 # VIDZO
 
-Reference-to-original advertising studio for brands and agencies.
+Reference-to-original advertising studio for brands and agencies: turn an authorized reference concept into a distinct 10–15 s vertical ad with your real product, exact logo and original characters, approving every frame before spending.
 
-**Status: unfinished application foundation, handed to Claude for continued coding.** GPT will handle visual assets separately. This is not yet a working paid AI video service.
+**Status: beta codebase, not deployed.** The web app, backend APIs, database schema, credit ledger, payment verification, admin review and the full creation flow are implemented and tested locally. Real AI providers, payments, email and hosting are **not connected yet**: they need service accounts. See [handoff/VERIFICATION.md](handoff/VERIFICATION.md) for exactly what was tested, and [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) for the architecture.
 
-Start with [HANDOFF_TO_CLAUDE.md](HANDOFF_TO_CLAUDE.md). The three original requirements documents and readable extracts are in [handoff/source-documents](handoff/source-documents). The user's warm beige design preference overrides the dark palette in the original design document.
+## Run
 
-## Run the current screens
-
-Requires Node.js 24 and pnpm 11.25.0.
+Requires Node.js 24 and pnpm 11 (`corepack pnpm …` works if pnpm isn't on PATH).
 
 ```powershell
 pnpm install --frozen-lockfile
-pnpm dev
+pnpm dev          # explore mode: browser-only, simulated, http://127.0.0.1:3000
+pnpm dev:local    # local test backend: real DB/storage/ledger on this machine, simulated providers, http://127.0.0.1:3001
 ```
 
-Open **http://127.0.0.1:3000/projects**. The root landing page and several navigation destinations are not built yet. Default demo behavior stores drafts in localStorage and uploads in IndexedDB on this device. Demo credits have no cash value. No genuine generated videos are included.
+In local mode, sign in with any email: the sign-in link appears on screen and in the console. `admin@example.test` gets the admin role. Data lives in `.data/` (git-ignored); delete that folder to reset. Only one `next dev` can run per checkout.
 
 ```powershell
 pnpm typecheck
@@ -23,6 +22,6 @@ pnpm test
 pnpm build
 ```
 
-These three checks pass at handoff. Browser QA and live integration tests are outstanding. Scripts `test:e2e`, `worker:test` and `trigger:dev`/`trigger:deploy` are planned commands with supporting files still missing. Do not enable `VIDZO_MODE=live` yet: API routes and integrations have not been implemented.
+Live mode (`VIDZO_MODE=live`) needs the variables in [.env.example](.env.example); each capability stays disabled until configured. Apply `supabase/migrations` to the Supabase project. Never apply `supabase/local`.
 
-Never commit secrets, customer media, dependencies or build output. No deployment ZIP is needed. Target repository: https://github.com/Devth97/VIDZO-NEW.git.
+Never commit secrets, customer media, `.data/`, dependencies or build output.

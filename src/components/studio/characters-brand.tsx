@@ -1,30 +1,80 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { Users, Check, ImagePlus, FileImage, ShieldCheck } from 'lucide-react';
+import { useState } from 'react';
+import { Users, Check, ImagePlus, FileImage, ShieldCheck, History } from 'lucide-react';
 import { useWorkspace } from '../workspace-provider';
 import { ErrorMessage } from '../ui';
-import { invalidateCreative, makeCandidates } from '@/lib/domain/project';
-import type { Asset } from '@/lib/domain/schema';
-import type { StepProps } from './types';
+import { currentSheet, logoAsset, productAssets, referenceLimits, selectCandidate, sheetHistory } from '@/lib/domain/project';
+import type { Brief } from '@/lib/domain/schema';
+import { PrivateMedia, type StepProps } from './shared';
 
-export function PrivateImage({ asset, imageKey, alt, className }: { asset?: Asset; imageKey?: string; alt: string; className?: string }) {
-  const { preview } = useWorkspace(); const [src, setSrc] = useState(''), [error, setError] = useState('');
-  useEffect(() => { let active = true; if (asset) void preview(asset).then(url => { if (active) setSrc(url); }).catch(e => { if (active) setError(e.message); }); else if (imageKey) setSrc('/api/media?key=' + encodeURIComponent(imageKey)); return () => { active = false; }; }, [asset?.id, imageKey]);
-  return src ? <img src={src} alt={alt} className={className}/> : <span className="small-text muted">{error || 'Loading preview…'}</span>;
+export function CharactersStep({ project: p, actions }: StepProps) {
+  const { pricing } = useWorkspace();
+  const [error, setError] = useState(''), [history, setHistory] = useState<string | null>(null);
+  const roles = p.analysis?.roles ?? [];
+  if (!roles.length) return <div className="panel empty-state"><Users size={32}/><h3>Let your product do the talking.</h3><p>No character roles are needed for this concept. Continue to your brand and brief, or add roles in Analysis.</p><span className="badge success"><Check size={14}/>Product-only concept</span></div>;
+  return <div>
+    <div className="notice"><ShieldCheck size={18}/><span>Identity sheets show front, profile, three-quarter and full-body views. We never create a recognisable likeness of a real person without permission.</span></div>
+    {roles.map(role => {
+      const options = p.candidates.filter(c => c.roleId === role.id);
+      const missing = options.filter(c => !currentSheet(p, c.id)).length;
+      return <section key={role.id} className="role-section">
+        <div className="section-head"><div><h3>{role.description}</h3><p className="muted small-text">Choose one original identity. Earlier versions stay available.</p></div>
+          {missing > 0 && <button className="button primary" onClick={() => actions.requestQuote('characters', role.id)} disabled={actions.busy}>Create {missing} identity sheet{missing > 1 ? 's' : ''}{pricing ? ` · ${missing * pricing.characterSheet} credits` : ''}</button>}</div>
+        <div className="candidate-grid">{options.map((c, i) => {
+          const sheet = currentSheet(p, c.id), versions = sheetHistory(p, c.id), selected = p.selections[role.id] === c.id;
+          return <article key={c.id} className={'candidate-card ' + (selected ? 'selected' : '')}>
+            <div className="candidate-portrait">{sheet ? <PrivateMedia asset={sheet} alt={`${c.name} identity sheet: front, profile, three-quarter and full body`}/> : <><Users size={56}/><span className="art-caption">SHEET NOT CREATED YET</span></>}</div>
+            <div className="candidate-info">
+              <label><input type="radio" name={role.id} checked={selected} disabled={!sheet} onChange={() => { try { actions.change(selectCandidate(p, role.id, c.id, true)); setError(''); } catch (e) { setError((e as Error).message); } }}/>{c.name} · Option {i + 1}</label>
+              <p>{c.description}</p>
+              <div className="inline-actions"><span className="badge">{sheet ? `Version ${sheet.version ?? versions.length}` : 'No sheet'}</span>
+                {versions.length > 1 && <button className="text-button" onClick={() => setHistory(history === c.id ? null : c.id)} aria-expanded={history === c.id}><History size={14}/>{versions.length} versions</button>}
+                {sheet && <button className="text-button" onClick={() => actions.requestQuote('character', c.id)} disabled={actions.busy}>Quote a redraw</button>}</div>
+              {history === c.id && <div className="version-strip">{versions.map(v => <figure key={v.id}><PrivateMedia asset={v} alt={`${c.name} version ${v.version}`}/><figcaption>v{v.version}{v.id === sheet?.id ? ' · current' : ''}</figcaption></figure>)}</div>}
+              {!sheet && <p className="small-text muted">Create the sheet to select this identity.</p>}
+            </div>
+          </article>;
+        })}</div>
+      </section>;
+    })}
+    <ErrorMessage message={error}/>
+  </div>;
 }
-export function CharactersStep({ project: p, change, run, busy }: StepProps) {
-  const { demo } = useWorkspace(); const roles = p.analysis?.roles || [];
-  if (!roles.length) return <div className="panel empty-state"><Users size={32}/><h3>Let your product do the talking.</h3><p>No character roles are needed for this concept. You can continue to your brand and brief, or add roles in Analysis.</p><span className="badge success"><Check size={14}/>Product-only concept</span></div>;
-  const candidates = p.characters.length ? p.characters : makeCandidates(roles);
-  return <div>{demo && <div className="notice">These are illustrative character choices. Live mode creates four-view identity sheets after you approve the quote.</div>}{roles.map(role => <section key={role.id} style={{ marginBottom: 32 }}><div className="section-head"><div><h3>{role.description}</h3><p className="muted small-text">Choose an original identity. All previous versions stay available.</p></div>{!demo && <button className="button secondary" onClick={() => run('characters', role.id)} disabled={busy}>Quote identity sheets</button>}</div><div className="candidate-grid">{candidates.filter(c => c.roleId === role.id).map((c, i) => <article key={c.id} className={'candidate-card ' + (c.approved ? 'selected' : '')}><div className="candidate-portrait">{c.imageKey ? <PrivateImage imageKey={c.imageKey} alt={`${c.name} identity sheet: front, profile, three-quarter and full body`}/> : <><Users size={64}/><span className="art-caption">{demo ? 'ILLUSTRATIVE IDENTITY' : 'SHEET NOT GENERATED'}</span></>}</div><div className="candidate-info"><label><input type="radio" name={role.id} checked={c.approved} disabled={!demo && !c.imageKey} onChange={() => change({ ...invalidateCreative(p), characters: candidates.map(ch => ch.roleId === role.id ? { ...ch, approved: ch.id === c.id } : ch) })}/>{c.name} · Option {i + 1}</label><p>{c.description}</p><span className="badge">Version {c.version} · {c.history.length} earlier versions</span><button className="text-button" onClick={() => run('character', c.id)} disabled={busy}>Quote one redraw</button></div></article>)}</div></section>)}<div className="notice"><ShieldCheck size={18}/>Identity sheets use four views. We do not create a recognizable replacement likeness from a real person without permission.</div></div>;
-}
-export function BrandStep({ project: p, change }: StepProps) {
-  const { upload, demo } = useWorkspace(); const [error, setError] = useState(''), [uploading, setUploading] = useState(false);
-  function field(key: keyof typeof p.brief, value: string) { change({ ...invalidateCreative(p), brief: { ...p.brief, [key]: value } }); }
+
+export function BrandStep({ project: p, actions }: StepProps) {
+  const { demo } = useWorkspace();
+  const [error, setError] = useState(''), [uploading, setUploading] = useState<string | null>(null);
+  const field = (key: keyof Brief, value: string) => actions.change({ ...p, brief: { ...p.brief, [key]: value } });
   async function pick(file: File | undefined, kind: 'product' | 'logo') {
-    if (!file) return; setError(''); setUploading(true);
-    try { if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) throw new Error('Use PNG, JPEG or WebP images.'); if (file.size > 10_000_000) throw new Error('Brand images must be 10 MB or smaller.'); const asset = await upload(p, file, kind); change({ ...invalidateCreative(p), assets: [...p.assets, asset] }); } catch (e) { setError((e as Error).message); } finally { setUploading(false); }
+    if (!file) return;
+    setError(''); setUploading(kind);
+    try {
+      if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) throw new Error('Use PNG, JPEG or WebP images.');
+      if (file.size > referenceLimits.imageMaxBytes) throw new Error('Brand images must be 10 MB or smaller.');
+      const asset = await actions.upload(file, kind);
+      if (asset?.status === 'rejected') setError(`We couldn’t use ${file.name}: ${asset.rejectReason}`);
+    } catch (e) { setError((e as Error).message); } finally { setUploading(null); }
   }
-  return <div className="studio-columns"><div><section className="panel"><h3>Your brand, in the frame.</h3><p className="muted small-text" style={{ margin: '8px 0 24px' }}>Original files stay untouched. Add clear angles of one primary product and your exact logo.</p><div className="field-grid"><div className="field"><label htmlFor="brand-name">Brand name</label><input id="brand-name" value={p.brief.brand} maxLength={100} onChange={e => field('brand', e.target.value)}/></div><div className="field"><label htmlFor="product-name">Primary product</label><input id="product-name" value={p.brief.product} maxLength={200} onChange={e => field('product', e.target.value)}/></div></div><div className="field-grid"><div><label htmlFor="product-upload">Product photos · PNG, JPEG, WebP</label><input id="product-upload" type="file" accept="image/png,image/jpeg,image/webp" disabled={uploading} onChange={e => void pick(e.target.files?.[0], 'product')}/></div><div><label htmlFor="logo-upload">Exact logo · PNG recommended</label><input id="logo-upload" type="file" accept="image/png,image/jpeg,image/webp" disabled={uploading} onChange={e => void pick(e.target.files?.[0], 'logo')}/></div></div><ErrorMessage message={error}/><div style={{ marginTop: 20 }}>{p.assets.filter(a => a.kind !== 'reference').map(a => <div className="asset-row" key={a.id}><FileImage size={20}/><div><strong>{a.name}</strong><small>{a.kind} · {(a.bytes / 1_000_000).toFixed(1)} MB · Original preserved</small></div><span className="badge">Added</span></div>)}</div><div className="field-grid" style={{ marginTop: 24 }}><div className="field"><label htmlFor="brand-color">Brand color</label><input id="brand-color" type="color" value={p.brief.color} onChange={e => field('color', e.target.value)}/></div><div className="field"><label htmlFor="brand-font">Optional font preference</label><input id="brand-font" value={p.brief.font} placeholder="e.g. Inter" onChange={e => field('font', e.target.value)}/></div></div></section>
-    <section className="panel" style={{ marginTop: 24 }}><h3>The creative brief</h3><p className="muted small-text" style={{ margin: '8px 0 24px' }}>A few considered details make a more distinctive ad.</p><div className="field-grid"><div className="field"><label htmlFor="objective">Objective</label><select id="objective" value={p.brief.objective} onChange={e => field('objective', e.target.value)}>{['Product launch', 'Brand awareness', 'Offer promotion', 'Product education'].map(v => <option key={v}>{v}</option>)}</select></div><div className="field"><label htmlFor="language">Language</label><select id="language" value={p.brief.language} onChange={e => field('language', e.target.value)}>{['English', 'Hindi', 'Tamil', 'Kannada', 'Telugu', 'Malayalam'].map(v => <option key={v}>{v}</option>)}</select></div></div>{([['audience', 'Who is it for?', 'Describe your audience'], ['tone', 'How should it feel?', 'e.g. Warm, understated and confident'], ['cta', 'Call to action', 'e.g. Discover the collection'], ['offer', 'Offer or website (optional)', 'Entered manually; no website import'], ['claims', 'Approved product claims (optional)', 'Only claims you can substantiate'], ['differences', 'What will make this original?', 'Describe new compositions, story, characters and copy']] as const).map(([key, label, placeholder]) => <div className="field" key={key}><label htmlFor={'brief-' + key}>{label}</label>{['audience', 'claims', 'differences'].includes(key) ? <textarea id={'brief-' + key} value={p.brief[key]} placeholder={placeholder} maxLength={2000} onChange={e => field(key, e.target.value)}/> : <input id={'brief-' + key} value={p.brief[key]} placeholder={placeholder} maxLength={500} onChange={e => field(key, e.target.value)}/>}</div>)}</section></div><aside className="panel studio-aside"><ImagePlus size={24}/><h3 style={{ marginTop: 16 }}>The details make the difference.</h3><ul className="check-list"><li><Check size={15}/>Front, side and detail product angles</li><li><Check size={15}/>A crisp, transparent logo</li><li><Check size={15}/>Your exact material, shape and packaging</li><li><Check size={15}/>A clear, readable call to action</li></ul><hr className="divider"/><p>Your logo is composited as an exact overlay, rather than asking a model to redraw it.</p>{demo && <p style={{ marginTop: 12 }}>Sample projects can continue with illustrative assets. Live generation requires your original product photos.</p>}</aside></div>;
+  const products = productAssets(p), logo = logoAsset(p);
+  const rejected = p.assets.filter(a => (a.kind === 'product' || a.kind === 'logo') && a.status === 'rejected');
+  return <div className="studio-columns"><div>
+    <section className="panel"><h3>Your brand, in the frame.</h3><p className="muted small-text" style={{ margin: '8px 0 24px' }}>Original files are stored unchanged. Add clear angles of one primary product and your exact logo.</p>
+      <div className="field-grid"><div className="field"><label htmlFor="brand-name">Brand name</label><input id="brand-name" value={p.brief.brand} maxLength={100} onChange={e => field('brand', e.target.value)}/></div><div className="field"><label htmlFor="product-name">Primary product</label><input id="product-name" value={p.brief.product} maxLength={200} onChange={e => field('product', e.target.value)}/></div></div>
+      <div className="field-grid">
+        <div><label htmlFor="product-upload">Product photos · PNG, JPEG, WebP · up to 10 MB</label><input id="product-upload" type="file" accept="image/png,image/jpeg,image/webp" disabled={Boolean(uploading)} onChange={e => { void pick(e.target.files?.[0], 'product'); e.target.value = ''; }}/></div>
+        <div><label htmlFor="logo-upload">Exact logo · transparent PNG recommended</label><input id="logo-upload" type="file" accept="image/png,image/jpeg,image/webp" disabled={Boolean(uploading)} onChange={e => { void pick(e.target.files?.[0], 'logo'); e.target.value = ''; }}/></div>
+      </div>
+      {uploading && <p className="small-text muted" role="status">Uploading and verifying your {uploading}…</p>}
+      <ErrorMessage message={error}/>
+      <div className="thumb-grid">{[...products, ...(logo ? [logo] : [])].map(a => <figure key={a.id}><PrivateMedia asset={a} alt={`${a.kind === 'logo' ? 'Logo' : 'Product photo'}: ${a.name}`}/><figcaption><FileImage size={14}/>{a.kind === 'logo' ? 'Logo' : 'Product'} · {a.width}×{a.height}</figcaption></figure>)}</div>
+      {rejected.length > 0 && <p className="small-text muted">{rejected.length} file{rejected.length > 1 ? 's were' : ' was'} rejected during verification and will not be used.</p>}
+      {!p.sample && (!products.length || !logo) && <p className="notice warning">Add at least one product photo and your logo before the storyboard.</p>}
+      <div className="field-grid" style={{ marginTop: 24 }}><div className="field"><label htmlFor="brand-color">Brand colour</label><input id="brand-color" type="color" value={p.brief.color} onChange={e => field('color', e.target.value)}/></div><div className="field"><label htmlFor="brand-font">Optional font preference</label><input id="brand-font" value={p.brief.font} maxLength={100} placeholder="e.g. Inter" onChange={e => field('font', e.target.value)}/></div></div>
+    </section>
+    <section className="panel" style={{ marginTop: 24 }}><h3>The creative brief</h3><p className="muted small-text" style={{ margin: '8px 0 24px' }}>A few considered details make a more distinctive ad. Visual details (product, tone, colour, differences) affect frames; text overlays (CTA, offer, claims, font) affect only the final assembly.</p>
+      <div className="field-grid"><div className="field"><label htmlFor="objective">Objective</label><select id="objective" value={p.brief.objective} onChange={e => field('objective', e.target.value)}>{['Product launch', 'Brand awareness', 'Offer promotion', 'Product education'].map(v => <option key={v}>{v}</option>)}</select></div><div className="field"><label htmlFor="language">Language</label><select id="language" value={p.brief.language} onChange={e => field('language', e.target.value)}>{['English', 'Hindi', 'Tamil', 'Kannada', 'Telugu', 'Malayalam'].map(v => <option key={v}>{v}</option>)}</select></div></div>
+      {([['audience', 'Who is it for?', 'Describe your audience', 1000], ['tone', 'How should it feel?', 'e.g. Warm, understated and confident', 200], ['cta', 'Call to action', 'e.g. Discover the collection', 200], ['offer', 'Offer or website (optional)', 'Entered manually; no website import', 500], ['claims', 'Approved product claims (optional)', 'Only claims you can substantiate', 2000], ['differences', 'What will make this original?', 'New compositions, story, characters and copy', 2000]] as const).map(([key, label, placeholder, max]) => <div className="field" key={key}><label htmlFor={'brief-' + key}>{label}</label>{['audience', 'claims', 'differences'].includes(key) ? <textarea id={'brief-' + key} value={p.brief[key]} placeholder={placeholder} maxLength={max} onChange={e => field(key, e.target.value)}/> : <input id={'brief-' + key} value={p.brief[key]} placeholder={placeholder} maxLength={max} onChange={e => field(key, e.target.value)}/>}</div>)}
+    </section></div>
+    <aside className="panel studio-aside"><ImagePlus size={24}/><h3 style={{ marginTop: 16 }}>The details make the difference.</h3><ul className="check-list"><li><Check size={15}/>Front, side and detail product angles</li><li><Check size={15}/>A crisp, transparent logo</li><li><Check size={15}/>Your exact material, shape and packaging</li><li><Check size={15}/>A clear, readable call to action</li></ul><hr className="divider"/><p>Your logo is composited as an exact overlay rather than redrawn by a model.</p>{demo && p.sample && <p style={{ marginTop: 12 }} className="small-text muted">The sample can continue without uploads. Real projects need your original product photos.</p>}</aside>
+  </div>;
 }
