@@ -1,5 +1,13 @@
 # Verification log
 
+## 25 November 2026 — editorial UI and domain status (Codex)
+
+- Audited public entry pages of Creatify, Arcads, Higgsfield, AdCreative.ai and Pencil; checked current GitHub Trending and component repositories. Research and design contract: `docs/UI_RESEARCH.md`. No competitor conversion figures or private dashboards were available; no conversion lift is claimed.
+- Redesigned homepage, creative-direction gallery, pricing, Google sign-in and workspace welcome; standardized buttons and updated the provisional wordmark icon. Added three original AI-created concept stills, delivered as six responsive WebP files. Clearly labeled as illustrative, not customer work or video outputs.
+- Isolated Chrome at 360/768/1440px: homepage, gallery, pricing, demo projects and live-mode sign-in have no page overflow or axe WCAG A/AA violations. Verified image loading, filters, dialog close, menu Escape/navigation close, draft CTA/autofocus and required sign-in consent. Sign-in submission used an intercepted error response, not a new external login. No uncaught browser errors.
+- 67 tests, main typecheck, Next build, Cloudflare build and Cloudflare typecheck pass. Retained server authentication/credit guards; no provider, payment or customer-data changes.
+- Separately confirmed the new Cloudflare zone active under promptpacktech@gmail.com with art/tegan nameservers, and custom-domain `/api/health` returned OK. The old account's moved-zone email is expected. User screenshot now shows Google's consent label as VIDZO; completing login after that screen is not established by the screenshot.
+
 ## 25 November 2026 — hosted database and Cloudflare (Codex)
 
 - Connected the owner's existing `vidzoauth` Supabase project through its connector. Applied the initial schema and hosted-permission hardening migration; all 15 tables have RLS enabled. Verified anonymous and signed-in API roles cannot execute any credit/payment mutation function. The local auth stub now mirrors Supabase's explicit default function grants.

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Plus, Search, Film, Clock3, Sparkles, Play, SlidersHorizontal, Trash2, Check } from 'lucide-react';
 import { useWorkspace } from '@/components/workspace-provider';
 import { ErrorMessage, Modal, ProductArt } from '@/components/ui';
+import { ConceptImage } from '@/components/concept-image';
 import { steps, type Project } from '@/lib/domain/schema';
 import { totalSeconds } from '@/lib/domain/project';
 
@@ -32,9 +33,9 @@ export default function ProjectsPage() {
     {resume ? <section className="resume-card panel"><div><span className="pill"><Clock3 size={14}/>PICK UP WHERE YOU LEFT OFF</span><h2>{resume.name}</h2><p className="muted">Step {resume.step + 1} of 7 · {steps[resume.step]} · {statusText[resume.status]}</p>
       <div className="progress-track" aria-label={`Step ${resume.step + 1} of 7`}>{steps.map((s, i) => <span key={s} className={i < resume.step ? 'done' : i === resume.step ? 'current' : ''} title={s}/>)}</div></div>
       <Link className="button ink" href={'/studio/' + resume.id}>Continue {steps[resume.step].toLowerCase()}</Link></section>
-    : <section className="studio-welcome"><div className="welcome-copy"><span className="pill"><Sparkles size={14}/>A LITTLE INSPIRATION. A LOT OF YOU.</span><h2>Your next great ad<br/>starts with <em>a spark.</em></h2><p>Bring a reference you love. Make it distinctly yours. Review every frame before you spend a credit.</p>
+    : <section className="studio-welcome"><div className="welcome-copy"><span className="pill"><Sparkles size={14}/>A LITTLE INSPIRATION. A LOT OF YOU.</span><h2>Your next great ad<br/>starts with <em>a spark.</em></h2><p>Bring a reference you love. Make it distinctly yours. Shape the story and review the quote before production.</p>
       <div className="inline-actions"><button className="button ink" onClick={() => setOpen(true)}>Create your first ad<Plus size={17}/></button>{demo && <button className="text-button" onClick={() => void start(true)} disabled={busy}><Play size={15}/>Explore a sample</button>}</div>
-      <span className="reassurance"><Check size={14}/>Drafts are free. Storyboard approval comes before any video spend.</span></div><div className="welcome-visual"><ProductArt/><span className="floating-note"><Film size={16}/><span>ILLUSTRATION<br/><strong>Not a generated ad</strong></span></span></div></section>}
+      <span className="reassurance"><Check size={14}/>Drafts are free. Video production starts after your quote approval.</span></div><div className="welcome-visual editorial-welcome"><ConceptImage id="ritual" priority/><span className="floating-note"><Film size={16}/><span>AI CONCEPT STILL<br/><strong>Not a generated ad</strong></span></span></div></section>}
     <div className="workflow-ribbon"><div><span className="step-marker">1</span><p><strong>Bring your reference</strong><small>Authorized, 5–30 seconds</small></p></div><div><span className="step-marker">2</span><p><strong>Make it your own</strong><small>Your product, cast and story</small></p></div><div><span className="step-marker">3</span><p><strong>Approve, then create</strong><small>Quoted credits, held until done</small></p></div></div>
     <section className="projects-section"><div className="section-head"><h2>Your projects <span className="count">{projects.length}</span></h2></div>
       <div className="project-toolbar"><div className="segmented" role="group" aria-label="Filter projects">{[['all', 'All'], ['draft', 'Drafts'], ['complete', 'In production & ready']].map(([key, label]) => <button key={key} aria-pressed={filter === key} className={filter === key ? 'active' : ''} onClick={() => setFilter(key)}>{label}</button>)}</div>

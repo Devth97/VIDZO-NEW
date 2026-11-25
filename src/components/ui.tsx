@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, type ReactNode } from 'react';
-import { X, Sparkles } from 'lucide-react';
+import { X, Sparkles, Aperture } from 'lucide-react';
 
 export function Modal({ open, close, title, children }: { open: boolean; close: () => void; title: string; children: ReactNode }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -13,7 +13,7 @@ export function Modal({ open, close, title, children }: { open: boolean; close: 
     <div className="section-head"><h2>{title}</h2><button className="icon-button" onClick={close} aria-label="Close dialog"><X size={20}/></button></div>{children}
   </dialog>;
 }
-export function Wordmark() { return <span className="wordmark"><span className="brand-symbol"><Sparkles size={18}/></span>vidzo<span className="wordmark-dot">.</span></span>; }
+export function Wordmark() { return <span className="wordmark"><span className="brand-symbol"><Aperture size={22} strokeWidth={1.5}/></span>vidzo<span className="wordmark-dot">.</span></span>; }
 export function ProductArt({ variant = 0, small = false }: { variant?: number; small?: boolean }) {
   return <div className={`product-art art-${variant % 4} ${small ? 'small' : ''}`} role="img" aria-label="Illustrative product composition, not a generated ad">
     <div className="art-orbit"/><div className="art-pedestal"/><div className="bottle"><div className="bottle-cap"/><div className="bottle-body"><span className="bottle-label">forma<span>DAILY RITUAL</span><i>01</i></span></div></div>

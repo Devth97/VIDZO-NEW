@@ -3,7 +3,7 @@
 ## Current deployment
 
 - App: `https://vidzo-studio.promptpacktech.workers.dev` on the owner's personal Cloudflare account.
-- Production origin: `https://vidzo.tech`; its new personal-account DNS zone is pending activation.
+- Production origin: `https://vidzo.tech`; its personal-account DNS zone is active. HTTPS and the database readiness endpoint were verified on 25 November 2026.
 - Supabase project: `vidzoauth` (`pehaquzsqeiocjirogei`), with 15 application tables and RLS enabled on all of them.
 - Mode: `live`. Unconfigured storage, AI, payments, pricing and assembly fail closed; this deployment does not enable simulated paid services.
 - Basic Cloudflare setup selected by the owner: no shared response/data cache and no Cloudflare image optimization.
@@ -44,16 +44,16 @@ Database TLS verifies certificates and hostnames. The official public Supabase C
 
 Cloudflare uses the `vidzo-supabase` Hyperdrive configuration (`1cb835e255244016b66acd64f1da19ca`) with the official CA uploaded, `verify-full`, query caching disabled and a five-connection origin limit. It connects to the project's direct Postgres endpoint. The free Hyperdrive allowance applies; no paid plan was activated. Workers cannot use the Node driver's custom-CA path directly, so Vite selects `db-cloudflare.ts` in place of the Node hosted implementation. Each operation gets a fresh client, and transactions retain one client until commit/rollback; no sockets are reused across Worker requests. Hyperdrive owns the upstream pool. Local Cloudflare development explicitly uses the remote binding and therefore the live database; `pnpm dev:local` remains the isolated simulated test backend.
 
-## Pending custom-domain activation
+## Custom domain and nameservers
 
-The domain currently uses `ace.ns.cloudflare.com` and `ollie.ns.cloudflare.com` in another account. The personal account's free zone was assigned:
+The domain now uses the personal account's free zone, assigned:
 
 ```text
 art.ns.cloudflare.com
 tegan.ns.cloudflare.com
 ```
 
-Before changing nameservers at Hostinger, preserve any existing mail, verification and other required DNS records from the old zone. Then activate the personal zone and attach `vidzo.tech` as a Worker Custom Domain (the typed config supports `domains: ["vidzo.tech"]`). Verify HTTPS and `/api/health` on the custom domain before calling it live. Domain attachment through the workflow may require adding narrowly scoped zone/domain permissions to its deployment token.
+The earlier `ace.ns.cloudflare.com` / `ollie.ns.cloudflare.com` zone belongs to a different account. Cloudflare's moved-zone email for that account is expected and is not an instruction to restore the old nameservers. The new zone was confirmed active under promptpacktech@gmail.com and `https://vidzo.tech/api/health` returned `status: ok`. The custom domain was connected through the dashboard/browser flow; future deployments must preserve that attachment. Keep email and verification records in the active Cloudflare zone, not Hostinger's inactive DNS editor.
 
 Supabase's Site URL and redirect allow list are already set by the owner for `https://vidzo.tech`. Keep `APP_ORIGIN` aligned with that origin. The workers.dev address is useful for checking the site, but a complete Google login redirects to the production origin. Do not claim an end-to-end Google login has passed until DNS/domain activation and an actual sign-in succeed.
 

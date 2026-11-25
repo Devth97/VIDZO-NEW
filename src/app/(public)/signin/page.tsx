@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Mail, ShieldCheck, FlaskConical } from 'lucide-react';
 import { useWorkspace } from '@/components/workspace-provider';
 import { ErrorMessage } from '@/components/ui';
+import { ConceptImage } from '@/components/concept-image';
 
 export default function SignIn() {
   const { mode, capabilities } = useWorkspace();
@@ -29,7 +30,7 @@ export default function SignIn() {
   }
   if (mode === 'demo') return <div className="auth-container panel"><ShieldCheck size={28}/><h1>Accounts are not enabled here</h1><p className="muted">This deployment runs in explore mode: drafts stay in your browser and AI, credits and payments are simulated. Accounts open with the private beta.</p><Link className="button primary full" href="/projects">Continue exploring</Link></div>;
   if (mode === 'live' && capabilities && !capabilities.auth) return <div className="auth-container panel"><h1>Sign-in is being set up</h1><p className="muted">Google sign-in is not configured on this server yet.</p></div>;
-  return <div className="auth-container panel">
+  return <div className="auth-editorial"><aside className="auth-story"><ConceptImage id="ritual" priority/><div><p className="eyebrow">YOUR NEXT CREATIVE CHAPTER</p><h2>Make it<br/><em>your own.</em></h2><p>One workspace for your reference, your brand and every creative decision.</p><small>AI-created concept still · not video output</small></div></aside><div className="auth-container panel">
     {sent ? <><Mail size={28}/><h1>Your local sign-in link</h1><p className="muted">A one-time test link is ready for <strong>{email}</strong>. No email was sent. You’ll return to where you left off.</p>
       {localLink && <div className="notice warning" style={{ marginTop: 20 }}><FlaskConical size={16}/><span>Local test backend: no email is sent. <a className="text-button" href={localLink}>Open the sign-in link</a> (also printed in the server console).</span></div>}
       <button className="text-button" onClick={() => setSent(false)}>Use a different email</button></>
@@ -40,5 +41,5 @@ export default function SignIn() {
         <p id="signin-terms" className="small-text muted">Read the <Link className="text-button" href="/terms" target="_blank">terms</Link> and <Link className="text-button" href="/privacy" target="_blank">privacy notice</Link> (opens a new tab).</p>
         <ErrorMessage message={error}/><button type="submit" className="button primary full" disabled={busy}>{mode === 'live' ? (busy ? 'Opening Google…' : 'Continue with Google') : (busy ? 'Creating link…' : 'Create local sign-in link')}</button></form>
       <p className="small-text muted" style={{ marginTop: 16 }}>New workspaces start with zero credits. You can create drafts and plan your storyboard before buying any.</p></>}
-  </div>;
+  </div></div>;
 }

@@ -1,58 +1,39 @@
 import Link from 'next/link';
-import { ArrowRight, Check, ScanLine, Users, Film, ShieldCheck, Receipt, Undo2 } from 'lucide-react';
-import { ProductArt } from '@/components/ui';
+import { ArrowRight, ArrowUpRight, Check, ScanLine, Layers3, Film, ShieldCheck, Receipt, Undo2 } from 'lucide-react';
+import { ConceptImage } from '@/components/concept-image';
+import { ConceptGallery } from '@/components/concept-gallery';
 import { placeholderPricing } from '@/lib/domain/pricing';
 import { rupees } from '@/lib/domain/schema';
 
 const faqs = [
-  ['Can I use any ad I find as a reference?', 'Only references you own or have permission to use. We study the concept (pacing, shot types, the hook) and help you create new expression with your own product and original characters. Changing a character alone does not clear copyright, so you confirm rights before uploading and review the result before delivery.'],
-  ['Will the ad look like my real product?', 'You upload your own product photos and exact logo. The logo and call to action are added as exact overlays, not redrawn by a model. A person on our team checks product fidelity, likeness and claims before any export can be downloaded during the beta.'],
-  ['How much does it cost?', 'You buy prepaid credits. Before any generation you see a quote with the model, native resolution, maximum credits and expiry, and nothing is held until you confirm. Credits are held while work runs and only finished items are settled.'],
-  ['What happens if generation fails?', 'Technical failures release the unsettled credits automatically. If you are unhappy with quality, contact support first: quality concerns go to review before any paid redraw.'],
-  ['Do you guarantee results?', 'No. We do not promise virality, views or return on ad spend, and we do not invent examples. The showcase only shows work we are allowed to publish.'],
-  ['Where are my files stored?', 'In private storage, accessible through short-lived signed links only. Uploads are never used in a public gallery or in analytics.'],
+  ['What can I try for free?', 'Creating an account and a project draft is free. AI generation is separate: you see a credit quote before approving paid work. Live generation and purchases are being prepared for the beta.'],
+  ['Can I use any ad as a reference?', 'Use a reference you own or have permission to use. Develop a distinct concept with your product and original expression. Changing a character alone does not clear copyright.'],
+  ['Are these actual VIDZO videos?', 'The visuals on this page are AI-created concept stills, not finished videos or customer results. Published customer work will appear only with permission.'],
+  ['How do credits work?', 'Credits are prepaid. Before generation, the quote identifies the model, native resolution, maximum credits and expiry. Nothing is held until you confirm. Pilot prices remain provisional until provider costs are measured.'],
+  ['What if a generation fails?', 'Technical failures release unsettled credits. Quality concerns go to review before a paid redraw. Duplicate clicks do not create duplicate charges.'],
+  ['Who controls my product and brand?', 'You supply product photos, your exact logo and approved claims. Review the storyboard and quote before video production. Human quality review is part of the planned beta delivery process.'],
 ] as const;
 
 export default function Home() {
   const pack = placeholderPricing.packs[0];
-  return <div className="landing">
-    <section className="landing-hero">
-      <div className="hero-copy">
-        <p className="eyebrow">THE REFERENCE-TO-ORIGINAL AD STUDIO · BETA</p>
-        <h1>Proven concepts. Your brand. <em>Reimagined.</em></h1>
-        <p>Start from an ad concept you are allowed to use. Make a distinct 10–15 second vertical ad with your real product, your exact logo and original characters — approving every frame before you spend.</p>
-        <div className="inline-actions"><Link className="button ink large" href="/projects">Create your first ad<ArrowRight size={18}/></Link><Link className="text-button" href="/pricing">See how credits work</Link></div>
-        <ul className="hero-points"><li><Check size={15}/>Drafts and storyboards before any video spend</li><li><Check size={15}/>Quote shown upfront · no subscription</li><li><Check size={15}/>Failed generations release their credits</li></ul>
+  return <div className="editorial-home">
+    <section className="editorial-hero" aria-labelledby="hero-title">
+      <div className="editorial-hero-copy"><p className="eyebrow"><span className="status-dot"/>YOUR PRODUCT. A NEW PERSPECTIVE.</p>
+        <h1 id="hero-title">Good inspiration.<br/>Distinctly <em>your ad.</em></h1>
+        <p className="hero-description">Plan an original 10–15 second product ad from a reference you have permission to use. Your real product. Your creative direction. Every scene, approved by you.</p>
+        <div className="hero-actions"><Link className="button primary large" href="/projects?new=1">Start a free draft<ArrowRight size={18}/></Link><Link className="editorial-link" href="#concepts">Explore the possibilities<ArrowUpRight size={17}/></Link></div>
+        <p className="hero-reassurance"><Check size={15}/>No card needed to start · generation quoted separately</p>
+        <div className="hero-caption"><span>THE VIDZO METHOD</span><p>Reference → Your brand → A distinct story</p></div>
       </div>
-      <div className="landing-visual"><ProductArt/><div className="visual-label"><span>ILLUSTRATION · NOT A GENERATED AD</span><span>9:16</span></div></div>
+      <div className="hero-artboard"><div className="hero-art-top"><span>CREATIVE DIRECTION / 001</span><span>VIDZO STUDIO</span></div><div className="hero-art-image"><ConceptImage id="ritual" priority/><span className="art-editorial-title">Ordinary product.<br/><em>Extraordinary perspective.</em></span><span className="art-format">9:16<br/>IN MIND</span></div><div className="hero-art-bottom"><span>THE DAILY RITUAL</span><span>AI CONCEPT STILL · NOT VIDEO</span></div></div>
     </section>
-
-    <section className="public-section" id="how">
-      <p className="eyebrow">HOW IT WORKS</p>
-      <h2>Three decisions. You make every one.</h2>
-      <div className="feature-grid">
-        <article><ScanLine size={22}/><h3>1 · Bring a reference</h3><p>Upload an authorized 5–30 s MP4 or MOV. We verify the file, then break down the hook, shots, roles and call to action. Edit anything we got wrong.</p></article>
-        <article><Users size={22}/><h3>2 · Make it yours</h3><p>Pick original identities from four-view sheets, add product photos, logo and brief, and approve a frame for every scene. Only what you change is redone.</p></article>
-        <article><Film size={22}/><h3>3 · Approve, then produce</h3><p>Choose Professional or Premium, read the quote, confirm. Watch real job stages, review each clip, and download after a human quality check.</p></article>
-      </div>
-    </section>
-
-    <section className="public-section">
-      <p className="eyebrow">WHY TEAMS TRUST THE PROCESS</p>
-      <h2>No surprises between the idea and the invoice.</h2>
-      <div className="feature-grid">
-        <article><Receipt size={22}/><h3>Upfront quotes</h3><p>Model, native resolution, maximum credits and expiry before consent. If the project changes, the quote is void and you get a new one.</p></article>
-        <article><Undo2 size={22}/><h3>Fair failure handling</h3><p>Duplicate clicks never double-charge. Technical failures release held credits. Unknown provider outcomes are reconciled, never blindly re-run.</p></article>
-        <article><ShieldCheck size={22}/><h3>Rights and review</h3><p>Rights confirmation, no identification of real people, exact logo overlays, no reference audio, and human review of product, likeness and claims.</p></article>
-      </div>
-    </section>
-
-    <section className="public-section cta-band">
-      <div><h2>Try the whole workflow first.</h2><p className="muted">Explore a sample project end to end with simulated credits. When you are ready, a starter pack is {pack.credits} credits for {rupees(pack.paise / 100)} <span className="small-text">(pilot price, subject to change)</span>.</p></div>
-      <Link className="button primary large" href="/projects">Create your first ad<ArrowRight size={18}/></Link>
-    </section>
-
-    <section className="public-section" id="faq"><p className="eyebrow">QUESTIONS, ANSWERED HONESTLY</p><h2>Before you start</h2>
-      <div className="faq">{faqs.map(([q, a]) => <details key={q}><summary>{q}</summary><p>{a}</p></details>)}</div></section>
+    <div className="promise-strip"><span>MADE FOR BRAND BUILDERS</span><p><ShieldCheck size={17}/>Your direction stays yours</p><p><Receipt size={17}/>A quote before you spend</p><p><Undo2 size={17}/>Redo a scene, not the whole story</p></div>
+    <section className="editorial-section" id="concepts"><div className="editorial-section-head"><div><p className="eyebrow">A LITTLE CREATIVE POSSIBILITY</p><h2>Different products.<br/><em>Same attention to detail.</em></h2></div><Link className="editorial-link" href="/showcase">Explore concepts<ArrowUpRight size={17}/></Link></div><ConceptGallery compact/></section>
+    <section className="editorial-section method-section" id="how"><div className="method-heading"><p className="eyebrow">LESS GUESSWORK. MORE DIRECTION.</p><h2>From “I like that”<br/>to <em>“that feels like us.”</em></h2><p>You steer the story. VIDZO gives each decision a place, from the first reference to the final review.</p><Link className="editorial-link" href="/projects?new=1">Start with a draft<ArrowRight size={17}/></Link></div><div className="method-steps">
+      {[{icon:ScanLine, title:'Bring the spark.', body:'Start with an authorized reference. Identify the hook, pacing and shots worth exploring.', meta:'01 / REFERENCE'}, {icon:Layers3, title:'Make it unmistakably yours.', body:'Add your product, brand and brief. Choose characters when needed, then review each scene.', meta:'02 / CREATIVE DIRECTION'}, {icon:Film, title:'Approve the next move.', body:'Review the storyboard and credit quote before video production. Keep control of individual scenes.', meta:'03 / REVIEW & PRODUCE'}].map(({icon:Icon,title,body,meta}) => <article key={meta}><span className="method-number">{meta}</span><div><Icon size={22} strokeWidth={1.5}/><h3>{title}</h3><p>{body}</p></div></article>)}
+    </div></section>
+    <section className="editorial-section price-preview"><div><p className="eyebrow">GOOD CREATIVE. CLEAR COSTS.</p><h2>Know the next step.<br/><em>And what it costs.</em></h2><p>Create your draft first. Generation starts with your approval of a quote, including the model, resolution and maximum credits.</p><Link className="editorial-link" href="/pricing">Understand the credits<ArrowUpRight size={17}/></Link></div><div className="price-preview-card"><span className="eyebrow">ILLUSTRATIVE STARTER PACK</span><p className="preview-price">{rupees(pack.paise / 100)}<span>/ {pack.credits} credits</span></p><hr/><p><Check size={15}/>Prepaid credits, no compulsory subscription</p><p><Check size={15}/>Technical failures release unsettled credits</p><p className="small-text muted">Pilot pricing under validation. Purchases and generation open when live services are ready.</p><Link className="button secondary full" href="/pricing">See pricing details<ArrowRight size={16}/></Link></div></section>
+    <section className="editorial-section editorial-faq" id="faq"><div><p className="eyebrow">BEFORE YOUR FIRST DRAFT</p><h2>A few good<br/><em>questions.</em></h2></div><div className="faq">{faqs.map(([q,a]) => <details key={q}><summary>{q}<span aria-hidden="true">+</span></summary><p>{a}</p></details>)}</div></section>
+    <section className="editorial-final"><p className="eyebrow">THE NEXT IDEA IS YOURS.</p><h2>Make room for<br/><em>something original.</em></h2><Link className="button primary large" href="/projects?new=1">Start a free draft<ArrowRight size={18}/></Link><p>Private beta · No card needed to create a draft</p></section>
   </div>;
 }
