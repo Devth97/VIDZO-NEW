@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, Check, ScanLine, Layers3, Film, ShieldCheck, Receipt, Undo2 } from 'lucide-react';
-import { ConceptGallery } from '@/components/concept-gallery';
+import { WorkflowPreview } from '@/components/workflow-preview';
 import { CreationComposer } from '@/components/creation-composer';
 import { placeholderPricing } from '@/lib/domain/pricing';
 import { rupees } from '@/lib/domain/schema';
@@ -24,10 +24,7 @@ export default function Home() {
       <CreationComposer variant="hero"/>
       <p className="hero-reassurance"><Check size={15}/>Free to draft · no card needed · generation is quoted separately</p>
     </section>
-    <section className="discover-strip" aria-labelledby="discover-title">
-      <div className="discover-head"><h2 id="discover-title">Need a direction?</h2><Link className="editorial-link" href="/showcase">See all creative directions<ArrowUpRight size={16}/></Link></div>
-      <ConceptGallery compact/>
-    </section>
+    <WorkflowPreview/>
     <div className="promise-strip"><span>MADE FOR BRAND BUILDERS</span><p><ShieldCheck size={17}/>Your direction stays yours</p><p><Receipt size={17}/>A quote before you spend</p><p><Undo2 size={17}/>Redo a scene, not the whole story</p></div>
     <section className="editorial-section method-section" id="how"><div className="method-heading"><p className="eyebrow">LESS GUESSWORK. MORE DIRECTION.</p><h2>From “I like that”<br/>to <em>“that feels like us.”</em></h2><p>You steer the story. VIDZO gives each decision a place, from the first reference to the final review.</p><Link className="editorial-link" href="/projects?new=1">Start with a draft<ArrowRight size={17}/></Link></div><div className="method-steps">
       {[{icon:ScanLine, title:'Bring the spark.', body:'Start with an authorized reference. Identify the hook, pacing and shots worth exploring.', meta:'01 / REFERENCE'}, {icon:Layers3, title:'Make it unmistakably yours.', body:'Add your product, brand and brief. Choose characters when needed, then review each scene.', meta:'02 / CREATIVE DIRECTION'}, {icon:Film, title:'Approve the next move.', body:'Review the storyboard and credit quote before video production. Keep control of individual scenes.', meta:'03 / REVIEW & PRODUCE'}].map(({icon:Icon,title,body,meta}) => <article key={meta}><span className="method-number">{meta}</span><div><Icon size={22} strokeWidth={1.5}/><h3>{title}</h3><p>{body}</p></div></article>)}
