@@ -1,5 +1,7 @@
 # VIDZO — coding handoff to Claude
 
+> **LATEST HANDOFF — 25 November 2026:** Read **[handoff/CLAUDE_UI_HANDOFF_20261125.md](handoff/CLAUDE_UI_HANDOFF_20261125.md)** first. It supersedes the historical foundation notes below. The user has reassigned **all development to Claude**, with **GPT used for visual direction and asset generation**. The immediate priority is the UI, using the user's Creatok and Meta Astryx references. VIDZO is now deployed on its custom domain with Supabase and GitHub automation; old statements below saying hosting/database/CI do not exist are historical.
+
 > **Update, 25 Nov 2026 (Claude):** Items 1–8 of “Resume order” below are now implemented, along with the missing routes and the provider adapters for item 9. Read `docs/IMPLEMENTATION.md` for the current architecture and `handoff/VERIFICATION.md` for what was and was not verified. Still open: the FFmpeg media worker (item 10), a live background runner, E2E/CI (item 11), hosting, and every real service account. The text below is the original GPT handoff, kept for history; where it conflicts with those two documents, they win.
 
 Prepared 25 November 2026. Checkout: `D:\VIDZO NEW`. Repository: https://github.com/Devth97/VIDZO-NEW.git. Branch: `main`.
