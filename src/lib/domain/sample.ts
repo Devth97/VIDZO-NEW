@@ -1,0 +1,17 @@
+import type { Analysis, Project } from './schema';
+import { newProject } from './project';
+
+export const sampleAnalysis: Analysis = {
+  summary: 'A product-led beauty concept: an intimate texture detail opens the film, followed by a clean product reveal and a quiet invitation to discover the brand.',
+  hook: 'Start with the detail they can almost feel.', cta: 'Discover your daily ritual', roles: [],
+  risks: ['Sample analysis for exploring the workflow. It was not inferred from an uploaded video.', 'Use your own product assets and authorized references for a real project.'],
+  shots: [
+    { id: 'shot-1', startMs: 0, endMs: 4000, camera: 'Macro push-in', productAction: 'Texture and material detail', lighting: 'Soft side light', dialogue: '', roleIds: [] },
+    { id: 'shot-2', startMs: 4000, endMs: 8000, camera: 'Slow orbit', productAction: 'Product reveal', lighting: 'Warm studio light', dialogue: '', roleIds: [] },
+    { id: 'shot-3', startMs: 8000, endMs: 12000, camera: 'Locked hero shot', productAction: 'Brand and CTA', lighting: 'Balanced key light', dialogue: '', roleIds: [] },
+  ],
+};
+export function sampleProject(): Project {
+  const p = newProject('The everyday ritual');
+  return { ...p, sample: true, rights: true, analysis: structuredClone(sampleAnalysis), brief: { ...p.brief, brand: 'FORMA', product: 'Daily serum', audience: 'People who value a considered daily routine', cta: 'Discover your daily ritual', differences: 'Original product, warmer palette, new compositions and original copy.' } };
+}
