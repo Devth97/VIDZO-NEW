@@ -36,14 +36,16 @@ export function CreationComposer({ variant, initial, onCreate, autoFocus }: Prop
   const [name, setName] = useState(initial?.name ?? '');
   const [objective, setObjective] = useState<Objective>(initial?.objective ?? 'Product launch');
   const [brand, setBrand] = useState(initial?.brand ?? ''), [product, setProduct] = useState(initial?.product ?? '');
-  const [details, setDetails] = useState(Boolean(initial?.brand || initial?.product));
+  const [direction, setDirection] = useState(initial?.direction ?? '');
+  const [details, setDetails] = useState(Boolean(initial?.brand || initial?.product || initial?.direction));
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const submitting = useRef(false); // synchronous guard: state updates lag behind a fast double-click
 
   useEffect(() => {
     if (!initial) return;
     setName(initial.name); setObjective(initial.objective); setBrand(initial.brand); setProduct(initial.product);
-    if (initial.brand || initial.product) setDetails(true);
+    setDirection(initial.direction ?? '');
+    if (initial.brand || initial.product || initial.direction) setDetails(true);
   }, [initial]);
   useEffect(() => { if (autoFocus) nameRef.current?.focus(); }, [autoFocus]);
 
@@ -51,7 +53,7 @@ export function CreationComposer({ variant, initial, onCreate, autoFocus }: Prop
     event.preventDefault();
     if (submitting.current) return;
     submitting.current = true; setBusy(true); setError('');
-    const intent: DraftIntent = { name: name.trim().slice(0, 100) || 'Untitled ad project', objective, brand: brand.trim().slice(0, 100), product: product.trim().slice(0, 200) };
+    const intent: DraftIntent = { name: name.trim().slice(0, 100) || 'Untitled ad project', objective, brand: brand.trim().slice(0, 100), product: product.trim().slice(0, 200), direction: direction.trim().slice(0, 2000) };
     try {
       if (variant === 'workspace' && onCreate) { await onCreate(intent); return; }
       saveDraftIntent(intent); // if storage is unavailable the workspace still offers a blank draft
@@ -63,7 +65,7 @@ export function CreationComposer({ variant, initial, onCreate, autoFocus }: Prop
     <div className="composer-head"><span id={id + '-title'}><Film size={14}/>NEW AD DRAFT</span><span className="composer-format">9:16 · 10–15 SECONDS</span></div>
     <label className="sr-only" htmlFor={id + '-name'}>Project name</label>
     <textarea ref={nameRef} id={id + '-name'} className="composer-input" rows={2} maxLength={100} value={name} onChange={e => setName(e.target.value)}
-      onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }}
+      onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }}
       placeholder="Name your ad — e.g. Summer serum launch" aria-describedby={id + '-help'}/>
     <div className="composer-controls">
       <div className="composer-goal"><span className="composer-label" id={id + '-goal'}>Goal</span>
@@ -76,6 +78,7 @@ export function CreationComposer({ variant, initial, onCreate, autoFocus }: Prop
     <div id={id + '-details'} className="composer-details" hidden={!details}>
       <div><label htmlFor={id + '-brand'}>Brand name</label><input id={id + '-brand'} maxLength={100} value={brand} onChange={e => setBrand(e.target.value)} placeholder="e.g. Acme Botanicals" autoComplete="organization"/></div>
       <div><label htmlFor={id + '-product'}>Primary product</label><input id={id + '-product'} maxLength={200} value={product} onChange={e => setProduct(e.target.value)} placeholder="e.g. Daily serum, 30 ml"/></div>
+      <div className="composer-direction"><label htmlFor={id + '-direction'}>Creative direction</label><textarea id={id + '-direction'} name="direction" rows={3} maxLength={2000} value={direction} onChange={e => setDirection(e.target.value)}/></div>
     </div>
     <ErrorMessage message={error}/>
     <div className="composer-foot">

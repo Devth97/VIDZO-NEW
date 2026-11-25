@@ -1,5 +1,13 @@
 # Workspace-first UI revision
 
+## Latest correction: focused creation entry
+
+The user also rejected the three-column admin-like landing surface. The current homepage removes the duplicate studio navigation, inspector, nested frame and full-width form button. Creatok and Vidro's input-first hierarchy is now expressed through a short headline, one compact idea composer, a goal picker, optional product fields and one Continue action. Studio navigation stays inside the private workspace.
+
+`IdeaComposer` collects an actual creative direction, not a renamed project-name field. A short editable project name is derived from the first sentence. The full idea is carried through the existing session-scoped draft intent and saved to the project's editable `brief.differences` field. Uploaded media is still added in the private studio; no simulated attachments or generation are represented. The workspace draft form exposes the carried direction for review and editing.
+
+Three regression tests cover the independent idea/name handoff, the 2,000-character bound and older draft compatibility. Browser checks cover 320/360/768/1366/1440px, keyboard and product-detail interaction, accessible controls and actual draft creation. The older layout notes below are historical and must not be restored.
+
 The user rejected all generated concept photography and explicitly requested an image-free creative workspace inspired by Creatok's task-first approach. This supersedes the earlier gallery and workflow-image integration briefs.
 
 ## Design contract

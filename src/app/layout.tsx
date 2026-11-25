@@ -8,6 +8,7 @@ import './globals.css';
 import './editorial.css';
 import './creation.css';
 import './creative-workspace.css';
+import './creative-entry.css';
 import './astryx-theme.css';
 import { DesignSystem } from '@/components/design-system';
 

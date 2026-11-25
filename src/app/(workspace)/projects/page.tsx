@@ -33,8 +33,8 @@ export default function ProjectsPage() {
   async function create(i: DraftIntent) {
     const p = await backend.createProject(i.name);
     // The brief is a draft field; the server merges it under its normal rules.
-    const withBrief = (i.brand || i.product || i.objective !== p.brief.objective)
-      ? await backend.saveProject({ ...p, brief: { ...p.brief, objective: i.objective, brand: i.brand, product: i.product } }, p.revision)
+    const withBrief = (i.brand || i.product || i.direction || i.objective !== p.brief.objective)
+      ? await backend.saveProject({ ...p, brief: { ...p.brief, objective: i.objective, brand: i.brand, product: i.product, differences: i.direction ?? '' } }, p.revision)
       : p;
     upsert(withBrief);
     router.push('/studio/' + p.id);

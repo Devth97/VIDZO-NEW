@@ -5,7 +5,7 @@
  */
 export const objectives = ['Product launch', 'Brand awareness', 'Offer promotion', 'Product education'] as const;
 export type Objective = typeof objectives[number];
-export type DraftIntent = { name: string; objective: Objective; brand: string; product: string };
+export type DraftIntent = { name: string; objective: Objective; brand: string; product: string; direction?: string };
 
 const KEY = 'vidzo:starting-draft';
 const clip = (v: unknown, n: number) => (typeof v === 'string' ? v.trim().slice(0, n) : '');
@@ -14,7 +14,7 @@ export function parseDraftIntent(raw: string | null): DraftIntent | null {
   if (!raw) return null;
   try {
     const o = JSON.parse(raw) as Partial<DraftIntent>;
-    return { name: clip(o.name, 100), objective: objectives.includes(o.objective as Objective) ? (o.objective as Objective) : 'Product launch', brand: clip(o.brand, 100), product: clip(o.product, 200) };
+    return { name: clip(o.name, 100), objective: objectives.includes(o.objective as Objective) ? (o.objective as Objective) : 'Product launch', brand: clip(o.brand, 100), product: clip(o.product, 200), direction: clip(o.direction, 2000) };
   } catch {
     // Earlier versions stored the project name as a plain string.
     return { name: clip(raw, 100), objective: 'Product launch', brand: '', product: '' };

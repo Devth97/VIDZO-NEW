@@ -1,6 +1,6 @@
 # VIDZO — coding handoff to Claude
 
-> **LATEST UI UPDATE — 25 November 2026:** The user explicitly asked GPT to integrate and deploy an image-free creative workspace, replacing the rejected generated galleries. Read [handoff/WORKSPACE_UI_UPDATE_20261125.md](handoff/WORKSPACE_UI_UPDATE_20261125.md). This supersedes the earlier photographic asset briefs and gallery direction. Keep the actual draft form, studio navigation and project checklist; do not restore the generated product/cast images.
+> **LATEST UI UPDATE — 25 November 2026:** Read the latest correction in [handoff/WORKSPACE_UI_UPDATE_20261125.md](handoff/WORKSPACE_UI_UPDATE_20261125.md). The user rejected both generated galleries and the bulky three-column admin-style homepage. Keep the focused idea composer, compact product/goal controls and single Continue action. Project navigation and review panels belong in the private studio. Do not restore either rejected homepage.
 
 > **LATEST HANDOFF — 25 November 2026:** Read **[handoff/CLAUDE_UI_HANDOFF_20261125.md](handoff/CLAUDE_UI_HANDOFF_20261125.md)** first. It supersedes the historical foundation notes below. The user has reassigned **all development to Claude**, with **GPT used for visual direction and asset generation**. The immediate priority is the UI, using the user's Creatok and Meta Astryx references. VIDZO is now deployed on its custom domain with Supabase and GitHub automation; old statements below saying hosting/database/CI do not exist are historical.
 
