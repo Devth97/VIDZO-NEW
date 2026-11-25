@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { FolderOpen, Image, Users, Wallet, LifeBuoy, Plus, Menu, X, ShieldCheck, Sparkles, LogOut, FlaskConical } from 'lucide-react';
 import { useWorkspace } from './workspace-provider';
 import { Loading, Wordmark } from './ui';
@@ -39,5 +39,7 @@ export function Shell({ children }: { children: ReactNode }) {
 }
 
 function SignInGate({ path }: { path: string }) {
-  return <div className="page-container"><div className="empty-state panel"><ShieldCheck size={30}/><h1>Sign in to your studio</h1><p>Your projects, brand files and credits are private to your workspace.</p><Link className="button primary" href={'/signin?next=' + encodeURIComponent(path)}>Sign in with email</Link></div></div>;
+  const [next, setNext] = useState(path);
+  useEffect(() => { setNext(path + window.location.search); }, [path]);
+  return <div className="page-container"><div className="empty-state panel"><ShieldCheck size={30}/><h1>Sign in to your studio</h1><p>Your projects, brand files and credits are private to your workspace.</p><Link className="button primary" href={'/signin?next=' + encodeURIComponent(next)}>Continue to sign in</Link></div></div>;
 }

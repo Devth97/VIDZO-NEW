@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, Check, ScanLine, Layers3, Film, ShieldCheck, Receipt, Undo2 } from 'lucide-react';
 import { ConceptImage } from '@/components/concept-image';
 import { ConceptGallery } from '@/components/concept-gallery';
+import { DraftStarter } from '@/components/draft-starter';
 import { placeholderPricing } from '@/lib/domain/pricing';
 import { rupees } from '@/lib/domain/schema';
 
@@ -21,9 +22,9 @@ export default function Home() {
       <div className="editorial-hero-copy"><p className="eyebrow"><span className="status-dot"/>YOUR PRODUCT. A NEW PERSPECTIVE.</p>
         <h1 id="hero-title">Good inspiration.<br/>Distinctly <em>your ad.</em></h1>
         <p className="hero-description">Plan an original 10–15 second product ad from a reference you have permission to use. Your real product. Your creative direction. Every scene, approved by you.</p>
-        <div className="hero-actions"><Link className="button primary large" href="/projects?new=1">Start a free draft<ArrowRight size={18}/></Link><Link className="editorial-link" href="#concepts">Explore the possibilities<ArrowUpRight size={17}/></Link></div>
+        <DraftStarter/>
+        <Link className="editorial-link hero-explore" href="#concepts">Explore the possibilities<ArrowUpRight size={17}/></Link>
         <p className="hero-reassurance"><Check size={15}/>No card needed to start · generation quoted separately</p>
-        <div className="hero-caption"><span>THE VIDZO METHOD</span><p>Reference → Your brand → A distinct story</p></div>
       </div>
       <div className="hero-artboard"><div className="hero-art-top"><span>CREATIVE DIRECTION / 001</span><span>VIDZO STUDIO</span></div><div className="hero-art-image"><ConceptImage id="ritual" priority/><span className="art-editorial-title">Ordinary product.<br/><em>Extraordinary perspective.</em></span><span className="art-format">9:16<br/>IN MIND</span></div><div className="hero-art-bottom"><span>THE DAILY RITUAL</span><span>AI CONCEPT STILL · NOT VIDEO</span></div></div>
     </section>

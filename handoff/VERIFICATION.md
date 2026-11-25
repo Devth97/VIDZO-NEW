@@ -7,6 +7,7 @@
 - Isolated Chrome at 360/768/1440px: homepage, gallery, pricing, demo projects and live-mode sign-in have no page overflow or axe WCAG A/AA violations. Verified image loading, filters, dialog close, menu Escape/navigation close, draft CTA/autofocus and required sign-in consent. Sign-in submission used an intercepted error response, not a new external login. No uncaught browser errors.
 - 67 tests, main typecheck, Next build, Cloudflare build and Cloudflare typecheck pass. Retained server authentication/credit guards; no provider, payment or customer-data changes.
 - Separately confirmed the new Cloudflare zone active under promptpacktech@gmail.com with art/tegan nameservers, and custom-domain `/api/health` returned OK. The old account's moved-zone email is expected. User screenshot now shows Google's consent label as VIDZO; completing login after that screen is not established by the screenshot.
+- User-selected Creatok follow-up: added a task-first draft starter with working name suggestions and private same-tab name handoff. Verified demo modal prefill, signed-out return path retention, no name leakage into URL, 67 tests and typecheck. The first editorial deployment (`50a5e84`) passed GitHub verification/deployment; the follow-up remains subject to its own deployment checks.
 
 ## 25 November 2026 — hosted database and Cloudflare (Codex)
 

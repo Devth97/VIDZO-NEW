@@ -1,6 +1,6 @@
 # VIDZO conversion and visual direction
 
-Reviewed 25 November 2026. Public-page audit of five relevant competitors; authenticated dashboards and private conversion rates were not accessible. Changes are hypotheses to measure, not proven conversion lifts.
+Reviewed 25 November 2026. Public-page audit of six relevant competitors, including the user-selected Creatok reference; authenticated dashboards and private conversion rates were not accessible. Changes are hypotheses to measure, not proven conversion lifts.
 
 | Public reference | Observed pattern | VIDZO application |
 | --- | --- | --- |
@@ -9,6 +9,7 @@ Reviewed 25 November 2026. Public-page audit of five relevant competitors; authe
 | [Higgsfield](https://higgsfield.ai/) | Media-first exploration | Editorial media and selectable directions, labeled as illustrative |
 | [AdCreative.ai](https://www.adcreative.ai/) | Use-case selection | Working category filters tied to concept details |
 | [Pencil](https://trypencil.com/) | Product narrative connected to buyer concerns | Visible approval, pricing and review sequence; no borrowed enterprise claims |
+| [Creatok](https://www.creatok.ai/) — user-selected reference | Prominent task composer, quick-start choices and staged approvals | A real draft starter with name suggestions, private same-tab handoff to the project modal and a visible next action; no pretend chat, media generation or publishing capabilities |
 
 ## Repository references
 
@@ -34,3 +35,5 @@ After consented aggregate analytics is configured, compare draft starts, sign-in
 Isolated Chrome: homepage, creative directions, pricing and demo workspace at 360/768/1440px; no page overflow, broken images after load, uncaught errors or axe WCAG A/AA violations. Checked working category filters, concept dialog Escape, mobile menu close/Escape, draft CTA navigation and autofocus. Live-mode sign-in checked at the same widths; consent blocked submission until checked, then the route was intercepted to test error recovery without sending credentials or creating an account. These checks do not establish a conversion lift or verify an actual new Google login.
 
 Three original concept images are delivered as responsive WebP assets (480/900px). Their combined six files are approximately 241 KB. Generated masters remain outside Git. Images remain explicitly illustrative and no fake output playback is presented.
+
+Creatok follow-up: inspected its public homepage in isolated Chrome. Applied the prominent task-entry surface and quick-start choices to a draft-name form, preserving VIDZO's warm visual language. Verified suggestions, typed-name handoff to the project modal, no name in URL, preservation through the signed-out gate and `/projects?new=1` return path. Names are stored only in sessionStorage for the current tab and consumed on entering projects; no fake generation or provider call is made. Storage failure falls back to the existing project creation controls.

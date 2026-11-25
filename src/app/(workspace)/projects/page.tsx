@@ -16,7 +16,13 @@ export default function ProjectsPage() {
   const router = useRouter();
   const [query, setQuery] = useState(''), [filter, setFilter] = useState('all'), [open, setOpen] = useState(false), [name, setName] = useState(''), [busy, setBusy] = useState(false), [error, setError] = useState('');
   const [doomed, setDoomed] = useState<Project | null>(null);
-  useEffect(() => { if (new URLSearchParams(window.location.search).get('new')) setOpen(true); }, []);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('new')) setOpen(true);
+    try {
+      const pending = sessionStorage.getItem('vidzo:starting-draft');
+      if (pending) { setName(pending.slice(0,100)); setOpen(true); sessionStorage.removeItem('vidzo:starting-draft'); }
+    } catch { /* New-project controls work without browser storage. */ }
+  }, []);
   async function start(sample = false) {
     setBusy(true); setError('');
     try { const p = await backend.createProject(name || 'Untitled project', sample); upsert(p); router.push('/studio/' + p.id); } catch (e) { setError((e as Error).message); setBusy(false); }
