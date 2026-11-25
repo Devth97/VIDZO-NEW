@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { UploadCloud, FileVideo, ShieldCheck, Check, ScanLine, AlertTriangle } from 'lucide-react';
 import { useWorkspace } from '../workspace-provider';
-import { ErrorMessage, ProductArt } from '../ui';
+import { ErrorMessage, MediaPlaceholder } from '../ui';
 import { readVideoSeconds } from '../backend';
 import { referenceAsset, referenceLimits, setRoles, updateAnalysisText, validateReference } from '@/lib/domain/project';
 import type { Analysis } from '@/lib/domain/schema';
@@ -30,7 +30,7 @@ export function ReferenceStep({ project: p, actions }: StepProps) {
       <div className="section-head"><h3>Your creative starting point</h3><span className="badge">MP4 / MOV · 5–30 s</span></div>
       <p className="muted small-text">Upload a reference you own or have permission to use. We study its concept, then help you make something original.</p>
       <label className="check-label" style={{ marginTop: 20 }}><input type="checkbox" checked={p.rights} disabled={p.sample} onChange={e => actions.change({ ...p, rights: e.target.checked })}/>I own this reference or have permission to use it, including any people, music and trademarks it contains.</label>
-      {p.sample ? <div style={{ marginTop: 20 }}><ProductArt/><p className="small-text muted" style={{ marginTop: 12 }}>Sample project: an illustration stands in for the reference. No reference video or generated ad is represented.</p></div> : source && <div style={{ marginTop: 20 }}>
+      {p.sample ? <div style={{ marginTop: 20 }}><MediaPlaceholder label="Text-only sample project"/><p className="small-text muted" style={{ marginTop: 12 }}>This sample contains an illustrative brief. No reference video or generated ad is included.</p></div> : source && <div style={{ marginTop: 20 }}>
         {source.status !== 'rejected' && <PrivateMedia asset={source} alt="Your reference video" className="reference-media"/>}
         <div className="asset-row"><FileVideo size={20}/><div><strong>{source.name}</strong><small>{source.seconds ? `${source.seconds.toFixed(1)} s · ` : ''}{(source.bytes / 1_000_000).toFixed(1)} MB{source.codec ? ` · ${source.codec.trim()}` : ''}</small></div>
           <span className={'badge ' + (source.status === 'verified' ? 'success' : source.status === 'rejected' ? 'danger' : '')}>{source.status === 'verified' ? (demo ? 'Checked in this browser' : 'Verified') : source.status === 'rejected' ? 'Rejected' : 'Verifying'}</span></div>

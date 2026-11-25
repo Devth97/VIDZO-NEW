@@ -24,7 +24,7 @@ export function PublicFrame({ children }: { children: ReactNode }) {
       <Link href="/" aria-label="Vidzo home"><Wordmark/></Link>
       <button id="public-menu-toggle" className="icon-button public-menu" aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} aria-controls="public-nav" onClick={() => setOpen(!open)}>{open ? <X/> : <Menu/>}</button>
       <nav id="public-nav" aria-label="Main" className={open ? 'is-open' : ''} onClick={event => { if ((event.target as HTMLElement).closest('a')) setOpen(false); }}>
-        <Link href="/#how">The process</Link><Link href="/showcase" aria-current={pathname === '/showcase' ? 'page' : undefined}>Creative directions</Link><Link href="/pricing" aria-current={pathname === '/pricing' ? 'page' : undefined}>Pricing</Link>
+        <Link href="/#how">The process</Link><Link href="/showcase" aria-current={pathname === '/showcase' ? 'page' : undefined}>Starting points</Link><Link href="/pricing" aria-current={pathname === '/pricing' ? 'page' : undefined}>Pricing</Link>
         {!inStudio && <Link href="/signin">Sign in</Link>}
         <Link className="button primary" href={inStudio ? '/projects' : '/projects?new=1'}>{inStudio ? 'Open your studio' : 'Start a free draft'}<ArrowUpRight size={16}/></Link>
       </nav>

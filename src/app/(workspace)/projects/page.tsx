@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { SegmentedControl, SegmentedControlItem, DropdownMenu } from '@astryxdesign/core';
 import { Search, Clock3, Play, SlidersHorizontal, Trash2, ArrowRight, Wallet, Image as ImageIcon, MoreHorizontal, FolderOpen, Sparkles } from 'lucide-react';
 import { useWorkspace } from '@/components/workspace-provider';
-import { ErrorMessage, Modal, ProductArt } from '@/components/ui';
+import { ErrorMessage, Modal, MediaPlaceholder } from '@/components/ui';
 import { CreationComposer } from '@/components/creation-composer';
 import { takeDraftIntent, type DraftIntent } from '@/lib/draft-intent';
 import { steps, type Project } from '@/lib/domain/schema';
@@ -87,9 +87,9 @@ export default function ProjectsPage() {
       <ErrorMessage message={error}/>
       {projects.length === 0 ? <div className="empty-state panel"><FolderOpen size={26}/><h3>No projects yet</h3><p>Use the composer above to create your first draft. Nothing is charged until you approve a quote.</p></div>
         : <div className="project-grid">
-          {shown.map((p, i) => <article className="project-card-wrap" key={p.id}>
+          {shown.map(p => <article className="project-card-wrap" key={p.id}>
             <Link className="project-card" href={'/studio/' + p.id}>
-              <div className="project-cover"><ProductArt variant={i} small/><span className={'project-status status-' + p.status}>{p.sample ? 'Sample · ' : ''}{statusText[p.status]}</span><span className="cover-format">9:16 · {totalSeconds(p)} SEC</span></div>
+              <div className="project-cover"><MediaPlaceholder small/><span className={'project-status status-' + p.status}>{p.sample ? 'Sample · ' : ''}{statusText[p.status]}</span><span className="cover-format">9:16 · {totalSeconds(p)} SEC</span></div>
               <div className="project-details"><h3>{p.name}</h3>
                 <p className="project-next">{nextAction(p)}</p>
                 <span className="progress-track small" role="img" aria-label={`Step ${p.step + 1} of 7`}>{steps.map((s, k) => <span key={s} className={k < p.step ? 'done' : k === p.step ? 'current' : ''}/>)}</span>

@@ -1,7 +1,5 @@
-import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
-import { ConceptGallery } from '@/components/concept-gallery';
-export const metadata = { title: 'Creative directions' };
+import { CreationComposer } from '@/components/creation-composer';
+export const metadata = { title: 'Starting points' };
 export default function Showcase() {
-  return <div className="editorial-home"><section className="editorial-section concept-page"><p className="eyebrow">THE DIRECTION BOARD</p><h1>A starting point.<br/><em>Never a template.</em></h1><p className="lead muted">Explore light, texture and composition. Then bring your own product and a reference you have permission to use.</p><ConceptGallery/><div className="concept-footnote"><div><h2>Customer work comes with permission.</h2><p className="muted">There are no published customer videos yet. These original concept stills illustrate art direction, not VIDZO video output.</p></div><Link className="button primary" href="/projects?new=1">Start your own draft<ArrowRight size={17}/></Link></div></section></div>;
+  return <div className="editorial-home starting-page"><header><p className="eyebrow">STARTING POINTS</p><h1>Give your next ad a job.</h1><p>Pick a quick start to fill in a project name and goal. Then add your own reference, product and brief.</p></header><CreationComposer variant="hero"/><section className="starting-notes" aria-labelledby="starting-notes-title"><h2 id="starting-notes-title">A starting point, not a finished ad.</h2><p>These shortcuts set up a draft. They do not generate content or spend credits. Your creative direction takes shape in the studio, with your own materials and approvals.</p><p>Published customer videos will appear only with permission. There are no public customer results yet.</p></section></div>;
 }

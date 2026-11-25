@@ -7,6 +7,7 @@ import '@astryxdesign/theme-stone/theme.css';
 import './globals.css';
 import './editorial.css';
 import './creation.css';
+import './creative-workspace.css';
 import './astryx-theme.css';
 import { DesignSystem } from '@/components/design-system';
 

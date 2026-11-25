@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, type ReactNode } from 'react';
-import { X, Sparkles, Aperture } from 'lucide-react';
+import { X, Sparkles, Aperture, Film } from 'lucide-react';
 
 export function Modal({ open, close, title, children }: { open: boolean; close: () => void; title: string; children: ReactNode }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -14,11 +14,8 @@ export function Modal({ open, close, title, children }: { open: boolean; close: 
   </dialog>;
 }
 export function Wordmark() { return <span className="wordmark"><span className="brand-symbol"><Aperture size={22} strokeWidth={1.5}/></span>vidzo<span className="wordmark-dot">.</span></span>; }
-export function ProductArt({ variant = 0, small = false }: { variant?: number; small?: boolean }) {
-  return <div className={`product-art art-${variant % 4} ${small ? 'small' : ''}`} role="img" aria-label="Illustrative product composition, not a generated ad">
-    <div className="art-orbit"/><div className="art-pedestal"/><div className="bottle"><div className="bottle-cap"/><div className="bottle-body"><span className="bottle-label">forma<span>DAILY RITUAL</span><i>01</i></span></div></div>
-    <span className="art-type">a little<br/><em>everyday magic.</em></span><span className="art-caption">ORIGINAL CONCEPT · ILLUSTRATION</span>
-  </div>;
+export function MediaPlaceholder({ small = false, label = 'No preview yet' }: { small?: boolean; label?: string }) {
+  return <div className={'media-placeholder' + (small ? ' small' : '')}><Film size={small ? 24 : 32} strokeWidth={1.25} aria-hidden="true"/>{label && <span>{label}</span>}</div>;
 }
 export function ErrorMessage({ message }: { message: string }) { return message ? <p role="alert" className="error-message">{message}</p> : null; }
 export function Loading() { return <div className="loading-state" role="status"><Sparkles size={24}/><p>Opening your studio…</p></div>; }

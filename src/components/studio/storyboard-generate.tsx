@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Check, Lock, LockOpen, RefreshCw, Film, Download, ShieldCheck, Sparkles, Plus, Trash2, AlertTriangle, LifeBuoy } from 'lucide-react';
 import Link from 'next/link';
 import { useWorkspace } from '../workspace-provider';
-import { ErrorMessage, ProductArt } from '../ui';
+import { ErrorMessage, MediaPlaceholder } from '../ui';
 import { addScene, allClipsCurrent, currentExport, removeScene, sceneLimits, sceneState, toggleLock, totalSeconds, updateScene } from '@/lib/domain/project';
 import type { Tier } from '@/lib/domain/schema';
 import { JobStatus, PrivateMedia, type StepProps } from './shared';
@@ -33,7 +33,7 @@ export function StoryboardStep({ project: p, actions }: StepProps) {
       const st = states[i];
       return <article className={'scene-card ' + (st.approved ? 'is-approved' : '')} key={s.id}>
         <div className="scene-card-header"><strong>SCENE {String(i + 1).padStart(2, '0')}</strong><span>{s.seconds}s · v{s.version}</span></div>
-        {st.frame ? <PrivateMedia asset={st.frame} alt={`${s.title} storyboard frame`} className="frame-media"/> : <div className="frame-empty"><ProductArt variant={i} small/><span>{st.frames ? 'Earlier frames no longer match this scene' : 'No frame yet'}</span></div>}
+        {st.frame ? <PrivateMedia asset={st.frame} alt={`${s.title} storyboard frame`} className="frame-media"/> : <div className="frame-empty"><MediaPlaceholder small label=""/><span>{st.frames ? 'Earlier frames no longer match this scene' : 'No frame yet'}</span></div>}
         <div className="scene-card-body">
           <div className="section-head" style={{ marginBottom: 8 }}>
             <label className="sr-only" htmlFor={'title-' + s.id}>Scene {i + 1} title</label>
@@ -109,7 +109,7 @@ export function ExportStep({ project: p, actions, onSimulateReview }: StepProps 
     <section className="panel">
       <div className="section-head"><h3>{approved ? 'Your story, ready to share.' : exp ? 'The final look, with a second pair of eyes.' : ready ? 'Every clip is in. Time to assemble.' : 'Your final frame is ahead.'}</h3><span className="badge">1080 × 1920 · 30 fps</span></div>
       {actions.job && <JobStatus job={actions.job} onRetry={actions.retry}/>}
-      <div className="download-preview">{exp ? <PrivateMedia asset={exp} alt="Assembled export preview"/> : <ProductArt variant={1}/>}</div>
+      <div className="download-preview">{exp ? <PrivateMedia asset={exp} alt="Assembled export preview"/> : <MediaPlaceholder label="No export yet"/>}</div>
       {!ready && <p className="notice warning">Generate a current clip for every scene first, in the Generate step.</p>}
       {ready && !exp && <><p className="small-text muted" style={{ margin: '16px 0' }}>Assembly joins your reviewed clips, adds your exact logo and call to action as overlays, and excludes all reference audio.{pricing ? ` ${pricing.export ? `${pricing.export} credits.` : 'No extra credits.'}` : ''}</p>
         <button className="button primary" onClick={() => actions.requestQuote('export')} disabled={actions.busy}>Request final assembly</button></>}
