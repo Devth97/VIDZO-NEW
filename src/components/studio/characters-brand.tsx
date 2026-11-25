@@ -45,6 +45,7 @@ export function BrandStep({ project: p, actions }: StepProps) {
   const { demo } = useWorkspace();
   const [error, setError] = useState(''), [uploading, setUploading] = useState<string | null>(null);
   const field = (key: keyof Brief, value: string) => actions.change({ ...p, brief: { ...p.brief, [key]: value } });
+  const products = productAssets(p), logo = logoAsset(p);
   async function pick(file: File | undefined, kind: 'product' | 'logo') {
     if (!file) return;
     setError(''); setUploading(kind);
@@ -55,14 +56,13 @@ export function BrandStep({ project: p, actions }: StepProps) {
       if (asset?.status === 'rejected') setError(`We couldn’t use ${file.name}: ${asset.rejectReason}`);
     } catch (e) { setError((e as Error).message); } finally { setUploading(null); }
   }
-  const products = productAssets(p), logo = logoAsset(p);
   const rejected = p.assets.filter(a => (a.kind === 'product' || a.kind === 'logo') && a.status === 'rejected');
   return <div className="studio-columns"><div>
     <section className="panel"><h3>Your brand, in the frame.</h3><p className="muted small-text" style={{ margin: '8px 0 24px' }}>Original files are stored unchanged. Add clear angles of one primary product and your exact logo.</p>
       <div className="field-grid"><div className="field"><label htmlFor="brand-name">Brand name</label><input id="brand-name" value={p.brief.brand} maxLength={100} onChange={e => field('brand', e.target.value)}/></div><div className="field"><label htmlFor="product-name">Primary product</label><input id="product-name" value={p.brief.product} maxLength={200} onChange={e => field('product', e.target.value)}/></div></div>
       <div className="field-grid">
-        <div><label htmlFor="product-upload">Product photos · PNG, JPEG, WebP · up to 10 MB</label><input id="product-upload" type="file" accept="image/png,image/jpeg,image/webp" disabled={Boolean(uploading)} onChange={e => { void pick(e.target.files?.[0], 'product'); e.target.value = ''; }}/></div>
-        <div><label htmlFor="logo-upload">Exact logo · transparent PNG recommended</label><input id="logo-upload" type="file" accept="image/png,image/jpeg,image/webp" disabled={Boolean(uploading)} onChange={e => { void pick(e.target.files?.[0], 'logo'); e.target.value = ''; }}/></div>
+        <div className="file-pick"><span className="file-pick-title">Product photos</span><input id="product-upload" className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" disabled={Boolean(uploading)} onChange={e => { void pick(e.target.files?.[0], 'product'); e.target.value = ''; }}/><label htmlFor="product-upload" className="upload-button" aria-disabled={Boolean(uploading)}><ImagePlus size={16}/>{uploading === 'product' ? 'Uploading…' : products.length ? 'Add another angle' : 'Add a product photo'}</label><small>PNG, JPEG or WebP · up to 10 MB</small></div>
+        <div className="file-pick"><span className="file-pick-title">Exact logo</span><input id="logo-upload" className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" disabled={Boolean(uploading)} onChange={e => { void pick(e.target.files?.[0], 'logo'); e.target.value = ''; }}/><label htmlFor="logo-upload" className="upload-button" aria-disabled={Boolean(uploading)}><FileImage size={16}/>{uploading === 'logo' ? 'Uploading…' : logo ? 'Replace logo' : 'Add your logo'}</label><small>Transparent PNG recommended</small></div>
       </div>
       {uploading && <p className="small-text muted" role="status">Uploading and verifying your {uploading}…</p>}
       <ErrorMessage message={error}/>

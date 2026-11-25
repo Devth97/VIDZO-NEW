@@ -1,5 +1,16 @@
 # Verification log
 
+## 25 November 2026 — creation-first UI and Astryx (Claude)
+
+| Check | Result |
+| --- | --- |
+| `pnpm typecheck`, `pnpm typecheck:cloudflare` | Passed |
+| `pnpm test` | Passed: 6 files, 67 tests |
+| `pnpm audit --prod --audit-level=moderate` | No known vulnerabilities |
+| `pnpm build`, `pnpm build:vinext` | Passed |
+| Browser (demo mode) | See `docs/UI_RESEARCH.md` → "Creation-first update". Desktop, 360 px and narrow-column layouts; keyboard paths; double-submit regression fixed |
+| Not verified | Live Google sign-in round trip with the new composer intent (no test account used); Lighthouse/axe automated runs this pass |
+
 ## 25 November 2026 — editorial UI and domain status (Codex)
 
 - Audited public entry pages of Creatify, Arcads, Higgsfield, AdCreative.ai and Pencil; checked current GitHub Trending and component repositories. Research and design contract: `docs/UI_RESEARCH.md`. No competitor conversion figures or private dashboards were available; no conversion lift is claimed.

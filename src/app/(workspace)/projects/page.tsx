@@ -1,63 +1,109 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, Search, Film, Clock3, Sparkles, Play, SlidersHorizontal, Trash2, Check } from 'lucide-react';
+import { SegmentedControl, SegmentedControlItem, DropdownMenu } from '@astryxdesign/core';
+import { Search, Clock3, Play, SlidersHorizontal, Trash2, ArrowRight, Wallet, Image as ImageIcon, MoreHorizontal, FolderOpen, Sparkles } from 'lucide-react';
 import { useWorkspace } from '@/components/workspace-provider';
 import { ErrorMessage, Modal, ProductArt } from '@/components/ui';
-import { ConceptImage } from '@/components/concept-image';
+import { CreationComposer } from '@/components/creation-composer';
+import { takeDraftIntent, type DraftIntent } from '@/lib/draft-intent';
 import { steps, type Project } from '@/lib/domain/schema';
 import { totalSeconds } from '@/lib/domain/project';
+import { nextAction } from '@/lib/next-action';
 
 const statusText: Record<Project['status'], string> = { draft: 'Draft', analyzing: 'Analysing', generating: 'In production', review: 'In review', ready: 'Ready', failed: 'Needs attention' };
+const filters = { all: 'All', progress: 'In progress', production: 'In production', ready: 'Ready' } as const;
+type Filter = keyof typeof filters;
+const matches = (p: Project, f: Filter) => f === 'all' || (f === 'progress' ? ['draft', 'analyzing', 'failed'].includes(p.status) : f === 'production' ? ['generating', 'review'].includes(p.status) : p.status === 'ready');
 
 export default function ProjectsPage() {
-  const { projects, backend, demo, upsert, remove } = useWorkspace();
+  const { projects, backend, demo, upsert, remove, wallet, mode } = useWorkspace();
   const router = useRouter();
-  const [query, setQuery] = useState(''), [filter, setFilter] = useState('all'), [open, setOpen] = useState(false), [name, setName] = useState(''), [busy, setBusy] = useState(false), [error, setError] = useState('');
+  const [query, setQuery] = useState(''), [filter, setFilter] = useState<Filter>('all'), [busy, setBusy] = useState(false), [error, setError] = useState('');
   const [doomed, setDoomed] = useState<Project | null>(null);
+  const [intent, setIntent] = useState<DraftIntent | null>(null), [focusComposer, setFocusComposer] = useState(false);
+
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('new')) setOpen(true);
-    try {
-      const pending = sessionStorage.getItem('vidzo:starting-draft');
-      if (pending) { setName(pending.slice(0,100)); setOpen(true); sessionStorage.removeItem('vidzo:starting-draft'); }
-    } catch { /* New-project controls work without browser storage. */ }
+    const pending = takeDraftIntent();
+    if (pending) setIntent(pending);
+    if (pending || new URLSearchParams(window.location.search).get('new')) setFocusComposer(true);
   }, []);
-  async function start(sample = false) {
-    setBusy(true); setError('');
-    try { const p = await backend.createProject(name || 'Untitled project', sample); upsert(p); router.push('/studio/' + p.id); } catch (e) { setError((e as Error).message); setBusy(false); }
+
+  async function create(i: DraftIntent) {
+    const p = await backend.createProject(i.name);
+    // The brief is a draft field; the server merges it under its normal rules.
+    const withBrief = (i.brand || i.product || i.objective !== p.brief.objective)
+      ? await backend.saveProject({ ...p, brief: { ...p.brief, objective: i.objective, brand: i.brand, product: i.product } }, p.revision)
+      : p;
+    upsert(withBrief);
+    router.push('/studio/' + p.id);
+  }
+  const sampling = useRef(false);
+  async function sample() {
+    if (sampling.current) return;
+    sampling.current = true; setBusy(true); setError('');
+    try { const p = await backend.createProject('Sample', true); upsert(p); router.push('/studio/' + p.id); } catch (e) { setError((e as Error).message); setBusy(false); sampling.current = false; }
   }
   async function destroy() {
     if (!doomed) return;
     setBusy(true);
     try { await backend.deleteProject(doomed.id); remove(doomed.id); setDoomed(null); } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   }
-  const shown = projects.filter(p => p.name.toLowerCase().includes(query.toLowerCase()) && (filter === 'all' || (filter === 'draft' ? ['draft', 'analyzing', 'failed'].includes(p.status) : ['generating', 'review', 'ready'].includes(p.status))));
-  const resume = projects[0];
-  return <div className="page-container">
-    <div className="page-heading"><div><p className="eyebrow">MAKE SOMETHING WORTH WATCHING</p><h1>Your creative space<span className="serif-dot">.</span></h1><p>Good references. Original ideas. Ads that feel like you.</p></div><div className="inline-actions">{demo && projects.length > 0 && <button className="text-button" onClick={() => void start(true)} disabled={busy}><Play size={15}/>Explore a sample</button>}<button className="button primary" onClick={() => setOpen(true)}><Plus size={18}/>New project</button></div></div>
-    {resume ? <section className="resume-card panel"><div><span className="pill"><Clock3 size={14}/>PICK UP WHERE YOU LEFT OFF</span><h2>{resume.name}</h2><p className="muted">Step {resume.step + 1} of 7 · {steps[resume.step]} · {statusText[resume.status]}</p>
-      <div className="progress-track" aria-label={`Step ${resume.step + 1} of 7`}>{steps.map((s, i) => <span key={s} className={i < resume.step ? 'done' : i === resume.step ? 'current' : ''} title={s}/>)}</div></div>
-      <Link className="button ink" href={'/studio/' + resume.id}>Continue {steps[resume.step].toLowerCase()}</Link></section>
-    : <section className="studio-welcome"><div className="welcome-copy"><span className="pill"><Sparkles size={14}/>A LITTLE INSPIRATION. A LOT OF YOU.</span><h2>Your next great ad<br/>starts with <em>a spark.</em></h2><p>Bring a reference you love. Make it distinctly yours. Shape the story and review the quote before production.</p>
-      <div className="inline-actions"><button className="button ink" onClick={() => setOpen(true)}>Create your first ad<Plus size={17}/></button>{demo && <button className="text-button" onClick={() => void start(true)} disabled={busy}><Play size={15}/>Explore a sample</button>}</div>
-      <span className="reassurance"><Check size={14}/>Drafts are free. Video production starts after your quote approval.</span></div><div className="welcome-visual editorial-welcome"><ConceptImage id="ritual" priority/><span className="floating-note"><Film size={16}/><span>AI CONCEPT STILL<br/><strong>Not a generated ad</strong></span></span></div></section>}
-    <div className="workflow-ribbon"><div><span className="step-marker">1</span><p><strong>Bring your reference</strong><small>Authorized, 5–30 seconds</small></p></div><div><span className="step-marker">2</span><p><strong>Make it your own</strong><small>Your product, cast and story</small></p></div><div><span className="step-marker">3</span><p><strong>Approve, then create</strong><small>Quoted credits, held until done</small></p></div></div>
-    <section className="projects-section"><div className="section-head"><h2>Your projects <span className="count">{projects.length}</span></h2></div>
-      <div className="project-toolbar"><div className="segmented" role="group" aria-label="Filter projects">{[['all', 'All'], ['draft', 'Drafts'], ['complete', 'In production & ready']].map(([key, label]) => <button key={key} aria-pressed={filter === key} className={filter === key ? 'active' : ''} onClick={() => setFilter(key)}>{label}</button>)}</div>
-        <label className="search-input"><Search size={17}/><span className="sr-only">Search projects</span><input type="search" placeholder="Search projects…" value={query} onChange={e => setQuery(e.target.value)}/></label></div>
+
+  const sorted = useMemo(() => [...projects].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1)), [projects]);
+  const shown = sorted.filter(p => p.name.toLowerCase().includes(query.trim().toLowerCase()) && matches(p, filter));
+  const counts = Object.fromEntries((Object.keys(filters) as Filter[]).map(f => [f, projects.filter(p => matches(p, f)).length])) as Record<Filter, number>;
+  const resume = sorted.find(p => p.status !== 'ready') ?? sorted[0];
+
+  return <div className="page-container workspace-home">
+    <div className="workspace-greeting"><div><p className="eyebrow">YOUR STUDIO</p><h1>What are we making<span className="serif-dot">?</span></h1></div>
+      {demo && <button className="text-button" onClick={() => void sample()} disabled={busy}><Play size={15}/>Explore the sample project</button>}</div>
+
+    <div className="workspace-top">
+      <CreationComposer variant="workspace" initial={intent} onCreate={create} autoFocus={focusComposer}/>
+      <aside className="workspace-side" aria-label="Shortcuts">
+        {resume ? <Link className="resume-tile" href={'/studio/' + resume.id}>
+          <span className="pill"><Clock3 size={13}/>CONTINUE</span>
+          <strong>{resume.name}</strong>
+          <span className="resume-next">{nextAction(resume)}</span>
+          <span className="progress-track" role="img" aria-label={`Step ${resume.step + 1} of 7: ${steps[resume.step]}`}>{steps.map((s, i) => <span key={s} className={i < resume.step ? 'done' : i === resume.step ? 'current' : ''}/>)}</span>
+          <span className="resume-cta">Open project<ArrowRight size={15}/></span>
+        </Link> : <div className="resume-tile is-empty"><span className="pill"><Sparkles size={13}/>FIRST PROJECT</span><strong>Your drafts will appear here</strong><span className="resume-next">Name your ad on the left to create one. Drafting is free.</span></div>}
+        <Link className="shortcut" href="/wallet"><Wallet size={18}/><span><strong>{wallet.available} credits</strong><small>{wallet.held ? `${wallet.held} held for running work` : mode === 'demo' ? 'Simulated in explore mode' : 'Add credits before production'}</small></span><ArrowRight size={15}/></Link>
+        <Link className="shortcut" href="/assets"><ImageIcon size={18}/><span><strong>Brand assets</strong><small>Product photos and logos you’ve added</small></span><ArrowRight size={15}/></Link>
+      </aside>
+    </div>
+
+    <section className="projects-section" aria-labelledby="projects-title">
+      <div className="section-head"><h2 id="projects-title">Projects <span className="count">{projects.length}</span></h2></div>
+      {projects.length > 0 && <div className="project-toolbar">
+        <SegmentedControl label="Filter projects by status" value={filter} onChange={v => setFilter(v as Filter)} size="sm">
+          {(Object.keys(filters) as Filter[]).map(f => <SegmentedControlItem key={f} value={f} label={`${filters[f]} ${counts[f]}`}/>)}
+        </SegmentedControl>
+        <label className="search-input"><Search size={17}/><span className="sr-only">Search projects</span><input type="search" placeholder="Search projects…" value={query} onChange={e => setQuery(e.target.value)}/></label>
+      </div>}
+      <p className="sr-only" role="status">{shown.length} of {projects.length} projects shown</p>
       <ErrorMessage message={error}/>
-      <div className="project-grid">
-        {shown.map((p, i) => <div className="project-card-wrap" key={p.id}><Link className="project-card" href={'/studio/' + p.id}>
-          <div className="project-cover"><ProductArt variant={i} small/><span className={'project-status status-' + p.status}>{p.sample ? 'Sample · ' : ''}{statusText[p.status]}</span><span className="cover-format">9:16 · {totalSeconds(p)} SEC</span></div>
-          <div className="project-details"><h3>{p.name}</h3><div><span>{p.brief.brand || 'Your brand'} · {steps[p.step]}</span><span><Clock3 size={13}/>{new Date(p.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span></div></div></Link>
-          <button className="icon-button card-delete" aria-label={`Delete ${p.name}`} onClick={() => setDoomed(p)}><Trash2 size={16}/></button></div>)}
-        {!query && filter === 'all' && <button className="create-card" onClick={() => setOpen(true)}><span className="create-circle"><Plus size={26}/></span><strong>A fresh idea starts here</strong><span>Create a new project</span></button>}
-        {shown.length === 0 && (query || filter !== 'all') && <div className="empty-state"><SlidersHorizontal/><h3>No projects here yet</h3><p>Try another search or create your next idea.</p><button className="button secondary" onClick={() => { setFilter('all'); setQuery(''); }}>Clear filters</button></div>}
-      </div>
+      {projects.length === 0 ? <div className="empty-state panel"><FolderOpen size={26}/><h3>No projects yet</h3><p>Use the composer above to create your first draft. Nothing is charged until you approve a quote.</p></div>
+        : <div className="project-grid">
+          {shown.map((p, i) => <article className="project-card-wrap" key={p.id}>
+            <Link className="project-card" href={'/studio/' + p.id}>
+              <div className="project-cover"><ProductArt variant={i} small/><span className={'project-status status-' + p.status}>{p.sample ? 'Sample · ' : ''}{statusText[p.status]}</span><span className="cover-format">9:16 · {totalSeconds(p)} SEC</span></div>
+              <div className="project-details"><h3>{p.name}</h3>
+                <p className="project-next">{nextAction(p)}</p>
+                <span className="progress-track small" role="img" aria-label={`Step ${p.step + 1} of 7`}>{steps.map((s, k) => <span key={s} className={k < p.step ? 'done' : k === p.step ? 'current' : ''}/>)}</span>
+                <div><span>{p.brief.brand || 'No brand yet'}</span><span><Clock3 size={13}/>{new Date(p.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span></div></div>
+            </Link>
+            <div className="card-menu">
+              <DropdownMenu button={{ label: `Actions for ${p.name}`, icon: <MoreHorizontal size={16}/>, isIconOnly: true, variant: 'ghost', size: 'sm' }} hasChevron={false} alignment="end"
+                items={[{ label: 'Open project', icon: <ArrowRight size={15}/>, onClick: () => router.push('/studio/' + p.id) }, { type: 'divider' }, { label: 'Delete project…', icon: <Trash2 size={15}/>, variant: 'destructive', onClick: () => setDoomed(p) }]}/>
+            </div>
+          </article>)}
+          {shown.length === 0 && <div className="empty-state"><SlidersHorizontal/><h3>Nothing matches</h3><p>Try another search or status.</p><button className="button secondary" onClick={() => { setFilter('all'); setQuery(''); }}>Clear filters</button></div>}
+        </div>}
     </section>
-    <Modal title="A new idea starts here" open={open} close={() => setOpen(false)}><p>Give your project a name. You can change it later.</p>
-      <form onSubmit={e => { e.preventDefault(); void start(); }}><label htmlFor="project-name">Project name</label><input data-autofocus id="project-name" maxLength={100} required value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Summer collection launch"/><ErrorMessage message={error}/><button className="button primary full" disabled={busy}>{busy ? 'Creating…' : 'Create project'}</button><p className="small-text muted" style={{ marginTop: 12 }}>No credits needed to create a draft.</p></form></Modal>
+
     <Modal title="Delete this project?" open={Boolean(doomed)} close={() => setDoomed(null)}><p><strong>{doomed?.name}</strong> will be removed from your workspace. {demo ? 'It is deleted from this browser and cannot be recovered.' : 'Files are retained for the disclosed retention period, then deleted.'}</p>
       <div className="inline-actions" style={{ marginTop: 20 }}><button className="button danger" onClick={() => void destroy()} disabled={busy}>Delete project</button><button className="button secondary" onClick={() => setDoomed(null)}>Keep it</button></div></Modal>
   </div>;

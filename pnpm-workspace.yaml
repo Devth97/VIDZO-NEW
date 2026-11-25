@@ -7,3 +7,4 @@ allowBuilds:
   sharp: true
   protobufjs: false
   workerd: true
+  '@astryxdesign/core': false

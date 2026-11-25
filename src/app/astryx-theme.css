@@ -1,0 +1,11 @@
+/* VIDZO palette mapped onto Astryx tokens (unlayered, so it wins over the stone theme). */
+[data-astryx-theme]{
+  --color-accent:#445a39;--color-accent-muted:#e6eadb;--color-text-accent:#3e5035;--color-icon-accent:#445a39;
+  --color-background-body:#f7f5f0;--color-background-surface:#fffefa;--color-background-card:#fffefa;--color-background-popover:#fffefa;--color-background-muted:#f0ede5;--color-background-inverted:#282b25;
+  --color-text-primary:#282b25;--color-text-secondary:#6b6d62;--color-icon-primary:#282b25;--color-icon-secondary:#6b6d62;
+  --color-border:#dedbd2;--color-border-emphasized:#aaa99c;
+  --color-text-success:#376145;--color-text-warning:#805619;--color-text-error:#a33229;--color-error:#a33229;
+  --font-family-body:'DM Sans',Arial,sans-serif;--font-family-heading:'Manrope',Arial,sans-serif;
+  --radius-element:8px;--radius-container:12px;--radius-inner:6px;
+  --shadow-med:0 12px 32px #282b2514;--shadow-high:0 24px 60px #282b2524;
+}

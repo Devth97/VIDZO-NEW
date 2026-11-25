@@ -17,13 +17,17 @@
     "dev:vinext": "node scripts/cloudflare.mjs dev --port 3001",
     "build:vinext": "node scripts/cloudflare.mjs build",
     "start:vinext": "node scripts/cloudflare.mjs preview",
-    "deploy:vinext": "node scripts/cloudflare.mjs deploy"
+    "deploy:vinext": "node scripts/cloudflare.mjs deploy",
+    "dev:demo": "node scripts/dev-demo.mjs"
   },
   "dependencies": {
+    "@astryxdesign/core": "0.7.14",
+    "@astryxdesign/theme-stone": "0.7.14",
     "@aws-sdk/client-s3": "3.1176.0",
     "@aws-sdk/s3-request-presigner": "3.1176.0",
     "@electric-sql/pglite": "0.6.0",
     "@google/genai": "3.6.1",
+    "@stylexjs/stylex": "0.19.0",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.119.2",
     "@trigger.dev/sdk": "4.8.10",

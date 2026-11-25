@@ -1,0 +1,104 @@
+/* Creation-first layout: centered composer, compact discovery, workspace shortcuts. */
+
+/* ---- Composer ---------------------------------------------------------------------------- */
+.composer-wrap{width:100%;max-width:780px;margin-inline:auto}
+.composer{background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:0 1px 0 #fff inset,0 18px 50px #3a3a2a14;padding:18px 20px 16px;text-align:left;transition:border-color .18s ease,box-shadow .18s ease}
+.composer:focus-within{border-color:#a9b49a;box-shadow:0 0 0 4px #c8d5ab55,0 18px 50px #3a3a2a14}
+.composer-head{display:flex;justify-content:space-between;gap:12px;font-size:.6875rem;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.composer-head span{display:inline-flex;align-items:center;gap:6px}
+.composer-input{display:block;width:100%;border:0;background:transparent;resize:none;min-height:0;padding:12px 2px 8px;font-family:var(--heading);font-size:clamp(1.2rem,1rem + .8vw,1.55rem);line-height:1.35;letter-spacing:-.03em;color:var(--ink)}
+.composer-input::placeholder{color:#9a9b8f}
+.composer-input:focus,.composer-input:focus-visible{outline:none}
+.composer-controls{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;padding:10px 0;border-top:1px solid #ece9e1}
+.composer-goal{display:flex;align-items:center;gap:10px;min-width:0;max-width:100%}
+.composer-label{font-size:.75rem;font-weight:600;color:var(--muted)}
+.composer-toggle{display:inline-flex;align-items:center;gap:6px;border:0;background:none;font-size:.8125rem;font-weight:600;color:var(--ink);min-height:40px;padding:0 4px;border-radius:8px}
+.composer-toggle:hover{color:var(--primary)}
+.composer-toggle svg{transition:transform .2s ease}
+.composer-toggle svg.is-open{transform:rotate(180deg)}
+.composer-details{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:4px 0 12px}
+.composer-details[hidden]{display:none}
+.composer-details label{font-size:.75rem;margin-bottom:6px}
+.composer-details input{min-height:42px;padding:9px 12px}
+.composer-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:12px;border-top:1px solid #ece9e1}
+.composer-next{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px;font-size:.6875rem;color:var(--muted)}
+.composer-next li{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:var(--surface-soft)}
+.composer-next{counter-reset:next}.composer-next li::before{counter-increment:next;content:counter(next);font-weight:700;color:var(--primary);margin-right:1px}
+.composer-submit{white-space:nowrap;min-height:46px;padding-inline:20px}
+.quick-starts{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;margin-top:14px}
+.quick-starts-label{font-size:.6875rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-right:4px}
+.quick-starts button{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:7px 14px;border:1px solid var(--border);border-radius:999px;background:#fffefacc;font-size:.8125rem;font-weight:550;color:var(--ink);transition:border-color .15s ease,background-color .15s ease}
+.quick-starts button:hover{border-color:#a9b49a;background:var(--surface)}
+.quick-starts button[aria-pressed=true]{border-color:var(--primary);background:#e6eadb;color:var(--primary)}
+.composer-wrap-workspace .quick-starts{justify-content:flex-start}
+
+/* Astryx segmented control inside the composer: let it scroll rather than overflow on narrow screens. */
+.composer-goal [role=radiogroup]{max-width:100%;overflow-x:auto;scrollbar-width:none}
+
+/* ---- Home hero --------------------------------------------------------------------------- */
+.create-hero{max-width:980px;margin:0 auto;padding:40px 0 28px;text-align:center;display:flex;flex-direction:column;align-items:center}
+.create-hero .eyebrow{display:inline-flex;align-items:center;gap:8px}
+.create-hero h1{font-size:clamp(2.4rem,1.6rem + 3vw,4.25rem);line-height:1.05;letter-spacing:-.065em;font-weight:650;margin:14px 0 14px}
+.create-hero h1 em{color:var(--primary)}
+.create-hero .hero-description{max-width:560px;color:var(--muted);font-size:1.0625rem;margin:0 0 28px}
+.create-hero .hero-reassurance{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-size:.8125rem;color:var(--muted)}
+.discover-strip{max-width:1120px;margin:8px auto 0;padding:28px 0 56px}
+.discover-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:14px}
+.discover-head h2{font-size:1.25rem;letter-spacing:-.03em}
+.discover-strip .concept-grid{gap:16px}
+
+/* ---- Workspace home --------------------------------------------------------------------- */
+.workspace-greeting{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px}
+.workspace-greeting h1{font-size:clamp(1.75rem,1.4rem + 1.2vw,2.5rem)}
+.workspace-top{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:start;margin-bottom:40px}
+.workspace-top .composer-wrap{max-width:none}
+.workspace-side{display:grid;gap:12px}
+.resume-tile{display:grid;gap:8px;padding:18px;border:1px solid var(--border);border-radius:16px;background:var(--surface);transition:border-color .15s ease,transform .15s ease}
+a.resume-tile:hover{border-color:#a9b49a;transform:translateY(-1px)}
+.resume-tile .pill{justify-self:start}
+.resume-tile strong{font-family:var(--heading);font-size:1.0625rem;letter-spacing:-.02em;overflow-wrap:anywhere}
+.resume-next{font-size:.8125rem;color:var(--muted)}
+.resume-cta{display:inline-flex;align-items:center;gap:6px;font-size:.8125rem;font-weight:600;color:var(--primary);margin-top:4px}
+.resume-tile.is-empty{background:var(--surface-soft)}
+.shortcut{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:14px 16px;border:1px solid var(--border);border-radius:14px;background:var(--surface);min-height:60px;transition:border-color .15s ease}
+.shortcut:hover{border-color:#a9b49a}
+.shortcut span{display:grid;gap:2px;min-width:0}
+.shortcut strong{font-size:.875rem}
+.shortcut small{color:var(--muted);font-size:.75rem}
+.project-toolbar [role=radiogroup]{max-width:100%;overflow-x:auto;scrollbar-width:none}
+.project-card-wrap{position:relative}
+.project-next{font-size:.8125rem;color:var(--primary);font-weight:600;margin:4px 0 8px}
+.progress-track.small{max-width:none;margin:0 0 10px;gap:4px}
+.progress-track.small span{height:4px}
+.card-menu{position:absolute;top:10px;right:10px;z-index:2;background:#fffefae6;border-radius:8px}
+
+@media(prefers-reduced-motion:reduce){.composer,.quick-starts button,.resume-tile,.composer-toggle svg{transition:none}a.resume-tile:hover{transform:none}}
+@media(max-width:1023px){.workspace-top{grid-template-columns:1fr}.workspace-side{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}}
+@media(max-width:767px){
+  .create-hero{padding:16px 0 12px}
+  .create-hero .hero-description{font-size:.9375rem;margin-bottom:20px}
+  .composer{padding:14px 14px 12px;border-radius:16px}
+  .composer-details{grid-template-columns:1fr}
+  .composer-foot{flex-direction:column;align-items:stretch}
+  .composer-submit{width:100%}
+  .composer-head .composer-format{display:none}
+  .quick-starts{justify-content:flex-start}
+  .discover-strip{padding:20px 0 40px}
+  .discover-head{flex-direction:column;gap:4px}
+  .workspace-greeting{flex-direction:column;align-items:flex-start}
+}
+.discover-strip .concept-card-media img{aspect-ratio:4/3;object-fit:cover;height:auto}
+@media(max-width:767px){.discover-strip .concept-grid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;padding-bottom:6px}.discover-strip .concept-card{flex:0 0 78%;scroll-snap-align:start}}
+/* Size the composer by its own width (it lives in a sidebar layout and on the full-width homepage). */
+.composer{container-type:inline-size}
+@container (max-width:600px){.composer-goal{flex-basis:100%;flex-wrap:wrap}.composer-goal [role=radiogroup]{flex:1}.composer-toggle{padding-left:0}.composer-foot{flex-direction:column;align-items:stretch}.composer-submit{width:100%}}
+@container (max-width:420px){.composer-goal .composer-label{flex-basis:100%}}
+@media(max-width:1279px){.workspace-top{grid-template-columns:1fr}.workspace-side{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}}
+.file-pick{display:grid;gap:6px;align-content:start}
+.file-pick-title{font-size:.875rem;font-weight:600}
+.file-pick small{color:var(--muted);font-size:.75rem}
+.upload-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;margin:0;padding:10px 16px;border:1px dashed #aaa99c;border-radius:8px;background:var(--surface-soft);font-weight:600;font-size:.875rem;cursor:pointer;transition:border-color .15s ease,background-color .15s ease}
+.upload-button:hover{border-color:var(--primary);background:#e6eadb}
+input:focus-visible+.upload-button{outline:2px solid #445a39;outline-offset:3px}
+.upload-button[aria-disabled=true]{opacity:.55;cursor:not-allowed}
+.studio-intro .badge{align-self:flex-start}
