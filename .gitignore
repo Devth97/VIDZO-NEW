@@ -19,3 +19,5 @@ __pycache__/
 .data/
 .vinext/
 .cloudflare/
+# Downloaded archives (e.g. old project exports) never belong in the repo
+*.zip
