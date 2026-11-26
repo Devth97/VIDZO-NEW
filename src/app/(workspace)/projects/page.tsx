@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { SegmentedControl, SegmentedControlItem, DropdownMenu } from '@astryxdesign/core';
 import { Search, Clock3, Play, SlidersHorizontal, Trash2, ArrowRight, Wallet, Image as ImageIcon, MoreHorizontal, FolderOpen, Sparkles } from 'lucide-react';
 import { useWorkspace } from '@/components/workspace-provider';
-import { ErrorMessage, Modal, MediaPlaceholder } from '@/components/ui';
+import { ErrorMessage, Modal } from '@/components/ui';
+import { Shot } from '@/components/hero-reel';
 import { CreationComposer } from '@/components/creation-composer';
 import { takeDraftIntent, type DraftIntent } from '@/lib/draft-intent';
 import { steps, type Project } from '@/lib/domain/schema';
@@ -13,6 +14,9 @@ import { totalSeconds } from '@/lib/domain/project';
 import { nextAction } from '@/lib/next-action';
 
 const statusText: Record<Project['status'], string> = { draft: 'Draft', analyzing: 'Analysing', generating: 'In production', review: 'In review', ready: 'Ready', failed: 'Needs attention' };
+/** Drawn covers until real frames exist: a stable tone and framing per project, never a fake result. */
+const covers = [{ tone: 'peach', shot: 'close' }, { tone: 'sage', shot: 'shelf' }, { tone: 'lavender', shot: 'orbit' }, { tone: 'butter', shot: 'light' }];
+const coverOf = (p: Project) => covers[[...p.id].reduce((n, c) => n + c.charCodeAt(0), 0) % covers.length];
 const filters = { all: 'All', progress: 'In progress', production: 'In production', ready: 'Ready' } as const;
 type Filter = keyof typeof filters;
 const matches = (p: Project, f: Filter) => f === 'all' || (f === 'progress' ? ['draft', 'analyzing', 'failed'].includes(p.status) : f === 'production' ? ['generating', 'review'].includes(p.status) : p.status === 'ready');
@@ -89,7 +93,7 @@ export default function ProjectsPage() {
         : <div className="project-grid">
           {shown.map(p => <article className="project-card-wrap" key={p.id}>
             <Link className="project-card" href={'/studio/' + p.id}>
-              <div className="project-cover"><MediaPlaceholder small/><span className={'project-status status-' + p.status}>{p.sample ? 'Sample · ' : ''}{statusText[p.status]}</span><span className="cover-format">9:16 · {totalSeconds(p)} sec</span></div>
+              <div className={'project-cover cover-tone-' + coverOf(p).tone}><Shot shot={coverOf(p).shot}/><span className={'project-status status-' + p.status}>{p.sample ? 'Sample · ' : ''}{statusText[p.status]}</span><span className="cover-format">9:16 · {totalSeconds(p)} sec</span></div>
               <div className="project-details"><h3>{p.name}</h3>
                 <p className="project-next">{nextAction(p)}</p>
                 <span className="progress-track small" role="img" aria-label={`Step ${p.step + 1} of 7`}>{steps.map((s, k) => <span key={s} className={k < p.step ? 'done' : k === p.step ? 'current' : ''}/>)}</span>

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core';
 import { ArrowRight, Film, Rocket, Megaphone, Tag, Lightbulb, ChevronDown, UploadCloud, ImagePlus, ListChecks } from 'lucide-react';
 import { objectives, saveDraftIntent, type DraftIntent, type Objective } from '@/lib/draft-intent';
+import { adFormats, formatDirection } from '@/lib/ad-formats';
 import { ErrorMessage } from './ui';
 
 const goalLabels: Record<Objective, { short: string; Icon: typeof Rocket }> = {
@@ -13,13 +14,8 @@ const goalLabels: Record<Objective, { short: string; Icon: typeof Rocket }> = {
   'Product education': { short: 'Explain', Icon: Lightbulb },
 };
 
-/** Quick starts fill real fields. They are starting points for a draft, not prompts sent to a model. */
-export const quickStarts: { label: string; name: string; objective: Objective }[] = [
-  { label: 'Product reveal', name: 'Product reveal', objective: 'Product launch' },
-  { label: 'New collection', name: 'New collection drop', objective: 'Brand awareness' },
-  { label: 'Seasonal offer', name: 'Seasonal offer', objective: 'Offer promotion' },
-  { label: 'How it works', name: 'How it works', objective: 'Product education' },
-];
+/** Quick starts are the same ad formats as the homepage library: they fill the name, goal and scene beats. */
+export const quickStarts = adFormats.map(f => ({ label: f.name, name: f.name, objective: f.objective, direction: formatDirection(f) }));
 
 type Props = {
   /** hero: saves the intent and opens the workspace (sign-in if needed). workspace: creates the project directly. */
@@ -90,6 +86,6 @@ export function CreationComposer({ variant, initial, onCreate, autoFocus }: Prop
   </form>
   <div className="quick-starts" role="group" aria-label="Quick starts: fill in a name and goal">
     <span className="quick-starts-label">Quick start</span>
-    {quickStarts.map(q => { const { Icon } = goalLabels[q.objective]; const active = name === q.name && objective === q.objective; return <button type="button" key={q.label} aria-pressed={active} onClick={() => { setName(q.name); setObjective(q.objective); nameRef.current?.focus(); }}><Icon size={15}/>{q.label}</button>; })}
+    {quickStarts.map(q => { const { Icon } = goalLabels[q.objective]; const active = name === q.name && objective === q.objective; return <button type="button" key={q.label} aria-pressed={active} onClick={() => { setName(q.name); setObjective(q.objective); setDirection(q.direction); setDetails(true); nameRef.current?.focus(); }}><Icon size={15}/>{q.label}</button>; })}
   </div></div>;
 }

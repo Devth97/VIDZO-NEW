@@ -10,7 +10,7 @@ import { StoryboardStep, GenerateStep, ExportStep } from '@/components/studio/st
 import { useProjectEditor } from '@/components/studio/use-project';
 import { describeQuote, jobActive, useJob, type StudioActions } from '@/components/studio/shared';
 import { createDemoBackend } from '@/components/backend';
-import { stepBlocker } from '@/lib/domain/project';
+import { stepBlocker, totalSeconds } from '@/lib/domain/project';
 import { steps, type JobView, type Quote, type QuoteScope, type Tier } from '@/lib/domain/schema';
 
 const intro = [
@@ -102,14 +102,15 @@ export default function StudioPage({ params }: { params: Promise<{ id: string }>
       <h1 className="sr-only">{project.name} studio</h1>
       <label htmlFor="studio-project-name" className="sr-only">Project name</label>
       <input id="studio-project-name" maxLength={100} value={project.name} onChange={e => change({ ...project, name: e.target.value })}/>
+      <span className="studio-slate" aria-label={`Vertical 9:16, ${totalSeconds(project)} seconds`}>9:16 · {totalSeconds(project)} s</span>
       <span className={'save-label state-' + saveState} role="status"><SaveIcon size={14}/>{saveText[saveState]}{ctx.demo && saveState === 'saved' ? ' on this device' : ''}</span>
     </div>
     {(saveState === 'conflict' || saveState === 'error') && <div className="notice warning" role="alert"><AlertTriangle size={16}/><span>{saveError}</span>{saveState === 'conflict' && <button className="button secondary" onClick={() => void reload()}><RotateCcw size={14}/>Load latest version</button>}{saveState === 'error' && <button className="button secondary" onClick={() => void flush()}>Try again</button>}</div>}
-    <nav aria-label="Creation steps"><ol className="stepper">{steps.map((label, i) => {
+    <nav aria-label="Creation steps"><ol className="stepper" style={{ ['--progress' as string]: project.step / (steps.length - 1) }}>{steps.map((label, i) => {
       const locked = i > project.step && Boolean(stepBlocker(project, i));
       return <li key={label}><button aria-current={project.step === i ? 'step' : undefined} aria-disabled={locked} className={locked ? 'is-locked' : ''} onClick={() => void go(i)} title={locked ? stepBlocker(project, i) ?? undefined : undefined}><span className="step-dot">{i < project.step ? <Check size={14}/> : i + 1}</span>{label}</button></li>;
     })}</ol></nav>
-    <div className="studio-intro"><div><h2>{intro[project.step][0]}</h2><p>{intro[project.step][1]}</p></div><span className="badge">Step {project.step + 1} of 7</span></div>
+    <div className={'studio-intro step-tone-' + project.step}><div><h2>{intro[project.step][0]}</h2><p>{intro[project.step][1]}</p></div><span className="badge">Step {project.step + 1} of 7</span></div>
     <ErrorMessage message={error}/>
     {project.step === 0 && <ReferenceStep {...props}/>}
     {project.step === 1 && <AnalysisStep {...props}/>}

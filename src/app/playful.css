@@ -285,3 +285,89 @@ input,select,textarea{border-radius:10px}
 @media(max-width:1100px){.format-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:767px){.format-grid{grid-template-columns:1fr}.format-card{grid-template-columns:96px minmax(0,1fr)}}
 @media(prefers-reduced-motion:reduce){.ticker-track{animation:none}.feature-ticker{overflow-x:auto}.ticker-row[aria-hidden]{display:none}.format-card,.format-use{transition:none}.format-card:hover{transform:none}}
+
+/* Studio polish: the same paper, ink and lime language as the landing page. */
+.studio-header{gap:12px;padding:8px 8px 8px 4px;border-radius:999px}
+.studio-header input{font-weight:600;letter-spacing:-.03em;border-radius:12px}
+.studio-header input:hover{background:#fffffd99}
+.studio-slate{flex-shrink:0;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:var(--surface);font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+.save-label{padding:4px 10px;border-radius:999px;background:#fffffdb3;border:1px solid var(--border)}
+.save-label.state-saved svg{color:#4f6b22}
+/* Stepper: dots on a track, olive fill up to the current step. */
+.stepper{position:relative;border-bottom:0;padding-bottom:8px;gap:0}
+.stepper::before,.stepper::after{content:'';position:absolute;inset-block-start:13px;inset-inline-start:calc(100% / 14);block-size:3px;border-radius:999px}
+.stepper::before{inline-size:calc(100% - 100% / 7);background:var(--border)}
+.stepper::after{inline-size:calc((100% - 100% / 7) * var(--progress,0));background:#4f6b22;transition:inline-size .4s ease}
+.stepper li{position:relative;z-index:1}
+.stepper button{align-items:center;text-align:center;border-radius:12px}
+.stepper .step-dot{inline-size:28px;block-size:28px;background:var(--surface);border:1.5px solid var(--border);font-family:var(--mono)}
+.stepper .step-dot:has(svg){background:#4f6b22;border-color:#4f6b22;color:#fff}
+.stepper [aria-current=step]{color:var(--ink)}
+.stepper [aria-current=step] .step-dot{box-shadow:var(--raise)}
+.stepper .is-locked{opacity:.55}
+.stepper button:hover:not(.is-locked):not([aria-current]) .step-dot{border-color:var(--ink)}
+/* Step header: a tinted card per step, like the landing step cards. */
+.studio-intro{align-items:flex-start;padding:24px 28px;border-radius:20px;border:1px solid var(--peach-line);background:var(--peach)}
+.studio-intro h2{font-weight:600;letter-spacing:-.035em}
+.studio-intro p{margin:0}
+.step-tone-1,.step-tone-5{background:var(--lavender);border-color:var(--lavender-line)}
+.step-tone-2,.step-tone-6{background:var(--sage);border-color:var(--sage-line)}
+.step-tone-3{background:#fff4c9;border-color:#e8d48b}
+.studio-intro .badge{background:var(--surface);border:1.5px solid var(--ink);border-radius:999px;padding:4px 12px;box-shadow:var(--raise)}
+/* Panels, asides and notices */
+.studio-columns>div>.panel,.studio-columns>.panel{box-shadow:0 1px 0 #00000005}
+.studio-aside{border:1.5px solid var(--ink);border-radius:20px;background:#e8f2c4;box-shadow:4px 5px 0 #a4b67c}
+.studio-aside h3{font-weight:600;letter-spacing:-.03em}
+.notice{border-radius:14px;border-inline-start:4px solid #4f6b22;background:var(--lime-soft);border-color:#c9d59b;color:#3b4a2c}
+.notice.warning{border-inline-start-color:#b07a1e}
+.badge{border-radius:999px;padding:4px 10px}
+.badge.success{background:#e6f4cb;border-color:#9eb775;color:#36532b}
+.field label,.field>span:first-child{font-weight:500}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--ink);outline-offset:1px;box-shadow:0 0 0 5px #d8fb6466}
+.check-list svg{color:#4f6b22}
+/* Empty frames and placeholders read as "a frame goes here", not as broken media. */
+.media-placeholder,.frame-empty{background:repeating-linear-gradient(135deg,var(--lavender) 0 10px,#f6f1fd 10px 11px);border:1.5px dashed var(--lavender-line);border-radius:12px;color:#624480}
+.scene-card{border-radius:18px;overflow:hidden;background:var(--surface)}
+.scene-card-header{background:var(--surface-soft);border-bottom:1px solid var(--border)}
+.scene-grid>.scene-card:nth-child(4n+1) .scene-card-header{background:var(--peach)}
+.scene-grid>.scene-card:nth-child(4n+2) .scene-card-header{background:var(--sage)}
+.scene-grid>.scene-card:nth-child(4n+3) .scene-card-header{background:var(--lavender)}
+.scene-grid>.scene-card:nth-child(4n+4) .scene-card-header{background:#fff4c9}
+.scene-card.is-approved .scene-card-header::after{content:'Approved';margin-inline-start:8px;padding:1px 8px;border-radius:999px;background:#4f6b22;color:#fff;font-size:.6875rem;font-family:var(--font)}
+.tier-card.selected{border:1.5px solid var(--ink);box-shadow:var(--raise);background:#e8f2c4}
+.quote-detail strong{font-family:var(--mono);font-weight:500}
+/* Sticky action bar: a frosted card that stays in reach. */
+.studio-bottom{bottom:12px;margin-inline:-8px;padding:12px 16px;border:1px solid var(--border);border-radius:999px;background:#fbf6eaeb;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 10px 30px -20px #25291f80}
+/* Workspace: drawn project covers and format quick starts */
+.project-cover .reel-shot{inset:0}
+.cover-tone-peach{background:#ffe3c4}.cover-tone-sage{background:#e0eac3}.cover-tone-lavender{background:#e9defa}.cover-tone-butter{background:#ffeba6}
+.project-cover .reel-bottle{inline-size:18%;block-size:52%}
+.project-cover .shot-close .reel-bottle{inline-size:40%;block-size:120%}
+.project-status,.cover-format{z-index:1}
+.quick-starts button{background:var(--surface);border:1px solid var(--border)}
+.quick-starts button[aria-pressed=true]{background:var(--lime);border:1.5px solid var(--ink);box-shadow:var(--raise)}
+.page-container>h1,.page-container .eyebrow+h1{letter-spacing:-.04em}
+.empty-state{border:1.5px dashed var(--border);border-radius:20px;background:#fffffd99}
+@media(max-width:767px){
+  .studio-header{border-radius:16px;flex-wrap:wrap}
+  .studio-slate{order:3}
+  .studio-intro{padding:20px;border-radius:16px}
+  .studio-bottom{border-radius:16px;margin-inline:0}
+  .stepper::before,.stepper::after{display:none}
+}
+@media(prefers-reduced-motion:reduce){.stepper::after{transition:none}}
+@media(max-width:767px){
+  .studio-header{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 12px;padding:0}
+  .studio-header input{inline-size:100%;min-inline-size:0}
+  .studio-slate{order:0;justify-self:start;grid-column:1/-1;display:inline-flex;gap:8px}
+  .studio-header .save-label{grid-column:1/-1;justify-self:start;margin:0}
+  .studio-bottom{position:static;border-radius:16px;background:var(--surface);backdrop-filter:none}
+}
+/* Wallet and other workspace pages: tinted stat cards and paper tables. */
+.stats-grid .stat-card{border-radius:18px;border:1px solid var(--peach-line);background:var(--peach)}
+.stats-grid .stat-card:nth-child(2){background:var(--lavender);border-color:var(--lavender-line)}
+.stats-grid .stat-card:nth-child(3){background:var(--sage);border-color:var(--sage-line)}
+.stat-card strong,.stat-card .mono{font-variant-numeric:tabular-nums}
+.table-wrap{border-radius:18px;border:1px solid var(--border);background:var(--surface);overflow:auto}
+.pack-card{border-radius:20px}
+.pack-card.featured{background:#e8f2c4;border:1.5px solid var(--ink);box-shadow:4px 5px 0 #a4b67c}
