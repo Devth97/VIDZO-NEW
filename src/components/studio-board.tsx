@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Check, ArrowUpRight, Lock } from 'lucide-react';
+import { ParticleTitle } from './effects/particle-title';
 
 /**
  * A drawn preview of the studio, adapted from the old site's "workflow board".
@@ -15,6 +16,7 @@ const scenes = [
 export function StudioBoard() {
   return <section className="editorial-section board-section" aria-labelledby="board-title">
     <div className="playful-head"><p className="eyebrow">Inside the studio</p><h2 id="board-title">Every scene in view.<br/><em>Every cost up front.</em></h2><p>One project holds the reference, the brief, each storyboard frame and the quote. Approve scenes one at a time and change a scene without redoing the rest.</p></div>
+    <ParticleTitle text="The everyday ritual"/>
     <div className="studio-board" role="img" aria-label="Illustration of the studio: a seven-step rail, a three-scene storyboard with two scenes approved, and a credit quote waiting for approval">
       <ol className="board-rail" aria-hidden="true">{rail.map((r, i) => <li key={r} className={i < 4 ? 'is-done' : i === 4 ? 'is-current' : ''}><span>{i < 4 ? <Check size={12} strokeWidth={3}/> : i + 1}</span>{r}</li>)}</ol>
       <div className="board-scenes" aria-hidden="true">
