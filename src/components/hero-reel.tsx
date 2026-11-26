@@ -13,7 +13,7 @@ const frames: Frame[] = [
   { scene: '05', beat: 'Invitation', secs: 3, tone: 'cream', shot: 'end', approved: false },
 ];
 
-function Shot({ shot }: { shot: string }) {
+export function Shot({ shot }: { shot: string }) {
   return <div className={'reel-shot shot-' + shot}>
     {shot === 'light' && <span className="reel-sun"/>}
     {shot === 'shelf' && <><span className="reel-leaf"/><span className="reel-shelf"/></>}

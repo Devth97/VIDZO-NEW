@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { Pause, Play, ScanLine, Layers3, Film, Clapperboard } from 'lucide-react';
+import { Pause, Play, ScanLine, Layers3, Film, Clapperboard, Check, FileVideo } from 'lucide-react';
 import { useInView, useReducedMotion } from './use-motion';
 
 /** Status reflects what works today: drafting and storyboards are live; video generation opens with live services. */
@@ -9,6 +9,12 @@ const steps = [
   { Icon: Layers3, short: 'Direction', title: 'Make it unmistakably yours', body: 'Add your product, brand and brief. Choose characters when needed, then shape each scene.', status: 'Available now', live: true },
   { Icon: Film, short: 'Review & produce', title: 'Approve, then produce', body: 'Approve every storyboard frame and the credit quote. Then produce the video, scene by scene.', status: 'Video opens with live services', live: false },
 ];
+/** Small drawn slices of the real studio inside each card (after MakeUGC's step mockups). */
+function Mock({ step }: { step: number }) {
+  if (step === 0) return <div className="mini" aria-hidden="true"><div className="mini-file"><FileVideo size={16}/><span><b>reference.mp4</b><small>12 s · MP4 · checked</small></span><Check size={14} className="mini-ok"/></div></div>;
+  if (step === 1) return <div className="mini" aria-hidden="true"><div className="mini-row"><small>Product</small><b>Daily serum, 30 ml</b></div><div className="mini-row"><small>Goal</small><span className="mini-chip">Launch</span></div><div className="mini-row"><small>Direction</small><b>Warmer palette, new cast</b></div></div>;
+  return <div className="mini" aria-hidden="true"><div className="mini-row"><small>3 frames × 5</small><b>15 credits</b></div><div className="mini-row"><small>Video</small><b>Quoted after frames</b></div><span className="mini-approve">Approve quote</span></div>;
+}
 const STEP_MS = 4000, TOTAL = STEP_MS * steps.length;
 const clock = (ms: number) => `00:${String(Math.floor(ms / 1000)).padStart(2, '0')}`;
 
@@ -47,6 +53,6 @@ export function StepTimeline() {
       </div>
       <span className="timeline-clock" aria-hidden="true">{clock(elapsed)} / {clock(TOTAL)}</span>
     </div>
-    <ol className="step-cards">{steps.map(({ Icon, title, body, status, live }, i) => <li key={title} className={i === active ? 'is-active' : ''}><span className="step-no">0{i + 1}</span><Icon size={22} strokeWidth={1.5} aria-hidden="true"/><h3>{title}</h3><p>{body}</p><span className={'status-pill' + (live ? '' : ' is-planned')}>{status}</span></li>)}</ol>
+    <ol className="step-cards">{steps.map(({ Icon, title, body, status, live }, i) => <li key={title} className={i === active ? 'is-active' : ''}><span className="step-no">0{i + 1}</span><Icon size={22} strokeWidth={1.5} aria-hidden="true"/><h3>{title}</h3><p>{body}</p><Mock step={i}/><span className={'status-pill' + (live ? '' : ' is-planned')}>{status}</span></li>)}</ol>
   </div>;
 }

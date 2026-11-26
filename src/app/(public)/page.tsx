@@ -1,7 +1,9 @@
 import Link from 'next/link';
-import { ArrowRight, ArrowUpRight, Check, ShieldCheck, Receipt, Undo2 } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Check } from 'lucide-react';
 import { StepTimeline } from '@/components/effects/step-timeline';
 import { StudioBoard } from '@/components/studio-board';
+import { FeatureTicker } from '@/components/feature-ticker';
+import { FormatLibrary } from '@/components/format-library';
 import { CreativeWorkspace } from '@/components/creative-workspace';
 import { placeholderPricing } from '@/lib/domain/pricing';
 import { rupees } from '@/lib/domain/schema';
@@ -19,7 +21,10 @@ export default function Home() {
   const pack = placeholderPricing.packs[0];
   return <div className="editorial-home workspace-home">
     <CreativeWorkspace/>
-    <div className="promise-strip"><span>Made for brand builders</span><p><ShieldCheck size={17}/>Your direction stays yours</p><p><Receipt size={17}/>A quote before you spend</p><p><Undo2 size={17}/>Redo a scene, not the whole story</p></div>
+    <FeatureTicker/>
+    <section className="editorial-section formats-section" id="formats"><div className="playful-head"><p className="eyebrow">Ad formats</p><h2>Start from a structure<br/><em>that already works.</em></h2><p>Pick a format to fill in your brief with its scenes. Every line stays editable, and you bring the product, the reference and the direction.</p></div>
+      <FormatLibrary/>
+    </section>
     <StudioBoard/>
     <section className="editorial-section playful-steps" id="how"><div className="playful-head"><p className="eyebrow">How the studio works</p><h2>Reference. Direction.<br/><em>Review.</em></h2><p>Keep the reference, product, brief and scene decisions together in one project. Nothing is generated until you approve a quote.</p></div>
       <StepTimeline/>
