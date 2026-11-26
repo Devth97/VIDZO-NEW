@@ -19,9 +19,9 @@ export function Shell({ children }: { children: ReactNode }) {
     <header className="mobile-header"><Link href="/" aria-label="Vidzo home"><Wordmark/></Link><button className="icon-button" onClick={() => setMenu(!menu)} aria-label={menu ? 'Close navigation' : 'Open navigation'} aria-expanded={menu} aria-controls="workspace-sidebar">{menu ? <X/> : <Menu/>}</button></header>
     <aside id="workspace-sidebar" className={'sidebar ' + (menu ? 'is-open' : '')}>
       <Link href="/" className="sidebar-logo" aria-label="Vidzo home"><Wordmark/></Link>
-      <div className="workspace-switch"><span className="workspace-avatar">V</span><div><strong>Your workspace</strong><small>{mode === 'demo' ? 'Explore mode' : mode === 'local' ? 'Local test backend' : 'Private studio'}</small></div><span className="beta-badge">BETA</span></div>
+      <div className="workspace-switch"><span className="workspace-avatar">V</span><div><strong>Your workspace</strong><small>{mode === 'demo' ? 'Explore mode' : mode === 'local' ? 'Local test backend' : 'Private studio'}</small></div><span className="beta-badge">Beta</span></div>
       <Link className="button primary new-project-button" href="/projects?new=1" onClick={() => setMenu(false)}><Plus size={18}/>New project</Link>
-      <span className="nav-caption">WORKSPACE</span>
+      <span className="nav-caption">Workspace</span>
       <nav aria-label="Workspace"><ul>{nav.map(({ href, label, Icon }) => <li key={href}><Link href={href} onClick={() => setMenu(false)} aria-current={path.startsWith(href) || (href === '/projects' && path.startsWith('/studio')) ? 'page' : undefined}><Icon size={19}/>{label}</Link></li>)}</ul></nav>
       <div className="sidebar-bottom">
         <div className="credit-box"><div><Sparkles size={16}/><strong>{wallet.available} credits</strong></div><small>{wallet.held} held · {wallet.spent} spent{mode === 'demo' ? ' · simulated' : ''}</small><Link href="/wallet">{mode === 'demo' ? 'How credits work' : 'Add credits'}</Link></div>
@@ -29,7 +29,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </div>
     </aside>
     <div className="app-body">
-      <header className="app-topbar"><span>THE CREATIVE STUDIO</span><div><span className="privacy-tag"><ShieldCheck size={14}/>Private by design</span><Link href="/pricing">Pricing</Link></div></header>
+      <header className="app-topbar"><span>The creative studio</span><div><span className="privacy-tag"><ShieldCheck size={14}/>Private by design</span><Link href="/pricing">Pricing</Link></div></header>
       {mode === 'demo' && <div className="demo-banner"><span><strong>Explore mode.</strong> Drafts stay in this browser. AI, credits and payments are simulated; outputs are labelled placeholders.</span><Link href="/signin">About accounts</Link></div>}
       {mode === 'local' && <div className="demo-banner local"><FlaskConical size={16}/><span><strong>Local test backend.</strong> Real database, storage, ledger and webhooks on this machine; AI providers and payments are simulated.</span></div>}
       {error && <div className="error-banner" role="alert">{error}</div>}

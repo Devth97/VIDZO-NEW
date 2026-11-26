@@ -109,7 +109,7 @@ export default function StudioPage({ params }: { params: Promise<{ id: string }>
       const locked = i > project.step && Boolean(stepBlocker(project, i));
       return <li key={label}><button aria-current={project.step === i ? 'step' : undefined} aria-disabled={locked} className={locked ? 'is-locked' : ''} onClick={() => void go(i)} title={locked ? stepBlocker(project, i) ?? undefined : undefined}><span className="step-dot">{i < project.step ? <Check size={14}/> : i + 1}</span>{label}</button></li>;
     })}</ol></nav>
-    <div className="studio-intro"><div><h2>{intro[project.step][0]}</h2><p>{intro[project.step][1]}</p></div><span className="badge">STEP {project.step + 1} OF 7</span></div>
+    <div className="studio-intro"><div><h2>{intro[project.step][0]}</h2><p>{intro[project.step][1]}</p></div><span className="badge">Step {project.step + 1} of 7</span></div>
     <ErrorMessage message={error}/>
     {project.step === 0 && <ReferenceStep {...props}/>}
     {project.step === 1 && <AnalysisStep {...props}/>}

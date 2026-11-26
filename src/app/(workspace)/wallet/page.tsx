@@ -41,7 +41,7 @@ export default function WalletPage() {
 
   const w = data?.wallet, pr = data?.pricing;
   return <div className="page-container">
-    <div className="page-heading"><div><p className="eyebrow">WALLET</p><h1>Credits, clearly accounted<span className="serif-dot">.</span></h1><p>Every hold, settlement and release is recorded in an append-only ledger.</p></div></div>
+    <div className="page-heading"><div><p className="eyebrow">Wallet</p><h1>Credits, clearly accounted<span className="serif-dot">.</span></h1><p>Every hold, settlement and release is recorded in an append-only ledger.</p></div></div>
     {mode === 'demo' && <p className="notice warning">Explore mode credits are simulated and start at 300. They have no cash value and cannot be bought here.</p>}
     {mode === 'local' && <p className="notice"><FlaskConical size={16}/>Local test backend: purchases create real order and ledger records, but payment is simulated through a correctly signed test webhook. No money moves.</p>}
     <ErrorMessage message={error}/>

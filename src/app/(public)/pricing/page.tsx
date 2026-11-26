@@ -12,13 +12,13 @@ export default function PricingPage() {
   const exampleCredits = example.frames * pr.frame + example.secs * pr.perSecond.professional + pr.export;
   return <div className="landing editorial-pricing">
     <section className="public-section first">
-      <p className="eyebrow">PRICING</p>
+      <p className="eyebrow">Pricing</p>
       <h1 className="page-title">Prepaid credits. A quote before every spend.</h1>
       <p className="muted lead">No compulsory subscription. You see the maximum credits, model and native resolution before you confirm, and only finished work is settled.</p>
       <div className="pricing-draft"><span><strong>Start with the idea. Decide on credits later.</strong><small>Create your project draft at no cost. AI generation is quoted separately.</small></span><Link className="button primary" href="/projects?new=1">Start a free draft<ArrowRight size={16}/></Link></div>
       {pr.illustrative && <p className="notice warning" style={{ marginTop: 24 }}>Pilot pricing under validation. Credit rates are placeholders until production costs are measured; they may change before launch. Explore mode never charges money.</p>}
       <div className="grid-two packs">{pr.packs.map((p, i) => <article key={p.id} className={'panel pack-card' + (i === 0 ? ' featured' : '')}>
-        <p className="eyebrow">{i === 0 ? 'FOR YOUR FIRST CONCEPT' : 'FOR MORE CREATIVE EXPLORATION'}</p><h3>{p.id === 'starter' ? 'Starter' : p.id === 'studio' ? 'Studio' : p.id}</h3>
+        <p className="eyebrow">{i === 0 ? 'For your first concept' : 'For more creative exploration'}</p><h3>{p.id === 'starter' ? 'Starter' : p.id === 'studio' ? 'Studio' : p.id}</h3>
         <p className="pack-price">{rupees(p.paise / 100)} <span>· {p.credits} credits</span></p>
         <p className="small-text muted">{rupees(p.paise / 100 / p.credits)} per credit · prices in INR; taxes shown at checkout</p>
         <ul className="check-list"><li><Check size={15}/>Credits do not expire during the beta</li><li><Check size={15}/>Use for frames, identity sheets, clips and assembly</li><li><Check size={15}/>Purchase history and ledger in your wallet</li></ul>

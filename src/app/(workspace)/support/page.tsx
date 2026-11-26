@@ -12,7 +12,7 @@ export default function SupportPage() {
     try { const r = await backend.support({ subject, body, projectId: projectId || undefined }); setSent(r.id); setSubject(''); setBody(''); } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
   }
   return <div className="page-container">
-    <div className="page-heading"><div><p className="eyebrow">SUPPORT</p><h1>We’re here to help<span className="serif-dot">.</span></h1><p>Quality concerns, payment questions or a stuck job — tell us what happened.</p></div></div>
+    <div className="page-heading"><div><p className="eyebrow">Support</p><h1>We’re here to help<span className="serif-dot">.</span></h1><p>Quality concerns, payment questions or a stuck job — tell us what happened.</p></div></div>
     <div className="studio-columns">
       <section className="panel">
         {sent ? <div className="empty-state"><Check size={28}/><h2>Request received</h2><p>Reference <span className="mono">{sent.slice(0, 8)}</span>. We’ll reply by email during the beta.</p><button className="button secondary" onClick={() => setSent('')}>Send another</button></div>

@@ -2,7 +2,7 @@ export const metadata = { title: 'Privacy (beta draft)' };
 
 export default function Privacy() {
   return <div className="landing"><article className="legal-content">
-    <p className="eyebrow">BETA DRAFT · NOT YET LEGALLY REVIEWED</p>
+    <p className="eyebrow">Beta draft · Not yet legally reviewed</p>
     <h1 className="page-title">Privacy notice</h1>
     <p className="notice warning">Working draft for the beta. Subprocessors, regions and retention periods must be confirmed and legally reviewed before paid launch.</p>
     <h2>What we collect</h2><p>Your email address for sign-in; the projects, briefs and files you upload; generated outputs; credit and payment records (we never see or store card details — payments are handled by the payment provider); and support messages.</p>

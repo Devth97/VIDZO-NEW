@@ -42,7 +42,7 @@ export function IdeaComposer() {
       </div>
       <ErrorMessage message={error}/>
     </form>
-    <p id={id + '-help'} className="idea-help"><ImagePlus size={14}/>Add your reference video and product photos in the studio.</p>
+    <p id={id + '-help'} className="idea-help"><ImagePlus size={14}/>Free to draft, no card needed. Add your reference video and product photos in the studio, then approve a quote before anything is generated.</p>
     <div className="idea-starters" role="group" aria-label="Ideas to start with"><span>Try an idea</span>{starters.map(s => <button type="button" key={s.label} onClick={() => { setIdea(s.idea); setObjective(s.objective); input.current?.focus(); }}>{s.label}<ArrowRight size={13}/></button>)}</div>
   </div>;
 }

@@ -2,7 +2,7 @@ export const metadata = { title: 'Terms (beta draft)' };
 
 export default function Terms() {
   return <div className="landing"><article className="legal-content">
-    <p className="eyebrow">BETA DRAFT · NOT YET LEGALLY REVIEWED</p>
+    <p className="eyebrow">Beta draft · Not yet legally reviewed</p>
     <h1 className="page-title">Terms of use</h1>
     <p className="notice warning">This is a plain-language working draft describing how the beta is designed to operate. It must be reviewed and approved by a qualified lawyer before paid launch and does not yet form a binding agreement.</p>
     <h2>Your references and materials</h2><p>You may upload only references, product images, logos and other materials you own or have permission to use, including any people, music and trademarks they contain. Vidzo studies a reference’s concept to help you create new, distinct expression; changing characters alone may not be enough to avoid infringement, and you remain responsible for the final use of your ad.</p>

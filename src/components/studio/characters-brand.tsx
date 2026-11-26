@@ -23,7 +23,7 @@ export function CharactersStep({ project: p, actions }: StepProps) {
         <div className="candidate-grid">{options.map((c, i) => {
           const sheet = currentSheet(p, c.id), versions = sheetHistory(p, c.id), selected = p.selections[role.id] === c.id;
           return <article key={c.id} className={'candidate-card ' + (selected ? 'selected' : '')}>
-            <div className="candidate-portrait">{sheet ? <PrivateMedia asset={sheet} alt={`${c.name} identity sheet: front, profile, three-quarter and full body`}/> : <><Users size={56}/><span className="art-caption">SHEET NOT CREATED YET</span></>}</div>
+            <div className="candidate-portrait">{sheet ? <PrivateMedia asset={sheet} alt={`${c.name} identity sheet: front, profile, three-quarter and full body`}/> : <><Users size={56}/><span className="art-caption">Sheet not created yet</span></>}</div>
             <div className="candidate-info">
               <label><input type="radio" name={role.id} checked={selected} disabled={!sheet} onChange={() => { try { actions.change(selectCandidate(p, role.id, c.id, true)); setError(''); } catch (e) { setError((e as Error).message); } }}/>{c.name} · Option {i + 1}</label>
               <p>{c.description}</p>

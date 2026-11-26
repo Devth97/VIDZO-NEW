@@ -62,7 +62,7 @@ export function CreationComposer({ variant, initial, onCreate, autoFocus }: Prop
   }
 
   return <div className={'composer-wrap composer-wrap-' + variant}><form className={'composer composer-' + variant} onSubmit={submit} aria-labelledby={id + '-title'}>
-    <div className="composer-head"><span id={id + '-title'}><Film size={14}/>NEW AD DRAFT</span><span className="composer-format">9:16 · 10–15 SECONDS</span></div>
+    <div className="composer-head"><span id={id + '-title'}><Film size={14}/>New ad draft</span><span className="composer-format">9:16 · 10–15 seconds</span></div>
     <label className="sr-only" htmlFor={id + '-name'}>Project name</label>
     <textarea ref={nameRef} id={id + '-name'} className="composer-input" rows={2} maxLength={100} value={name} onChange={e => setName(e.target.value)}
       onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }}

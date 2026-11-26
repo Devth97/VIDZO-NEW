@@ -57,19 +57,19 @@ export default function ProjectsPage() {
   const resume = sorted.find(p => p.status !== 'ready') ?? sorted[0];
 
   return <div className="page-container workspace-home">
-    <div className="workspace-greeting"><div><p className="eyebrow">YOUR STUDIO</p><h1>What are we making<span className="serif-dot">?</span></h1></div>
+    <div className="workspace-greeting"><div><p className="eyebrow">Your studio</p><h1>What are we making<span className="serif-dot">?</span></h1></div>
       {demo && <button className="text-button" onClick={() => void sample()} disabled={busy}><Play size={15}/>Explore the sample project</button>}</div>
 
     <div className="workspace-top">
       <CreationComposer variant="workspace" initial={intent} onCreate={create} autoFocus={focusComposer}/>
       <aside className="workspace-side" aria-label="Shortcuts">
         {resume ? <Link className="resume-tile" href={'/studio/' + resume.id}>
-          <span className="pill"><Clock3 size={13}/>CONTINUE</span>
+          <span className="pill"><Clock3 size={13}/>Continue</span>
           <strong>{resume.name}</strong>
           <span className="resume-next">{nextAction(resume)}</span>
           <span className="progress-track" role="img" aria-label={`Step ${resume.step + 1} of 7: ${steps[resume.step]}`}>{steps.map((s, i) => <span key={s} className={i < resume.step ? 'done' : i === resume.step ? 'current' : ''}/>)}</span>
           <span className="resume-cta">Open project<ArrowRight size={15}/></span>
-        </Link> : <div className="resume-tile is-empty"><span className="pill"><Sparkles size={13}/>FIRST PROJECT</span><strong>Your drafts will appear here</strong><span className="resume-next">Name your ad on the left to create one. Drafting is free.</span></div>}
+        </Link> : <div className="resume-tile is-empty"><span className="pill"><Sparkles size={13}/>First project</span><strong>Your drafts will appear here</strong><span className="resume-next">Name your ad on the left to create one. Drafting is free.</span></div>}
         <Link className="shortcut" href="/wallet"><Wallet size={18}/><span><strong>{wallet.available} credits</strong><small>{wallet.held ? `${wallet.held} held for running work` : mode === 'demo' ? 'Simulated in explore mode' : 'Add credits before production'}</small></span><ArrowRight size={15}/></Link>
         <Link className="shortcut" href="/assets"><ImageIcon size={18}/><span><strong>Brand assets</strong><small>Product photos and logos you’ve added</small></span><ArrowRight size={15}/></Link>
       </aside>
@@ -89,7 +89,7 @@ export default function ProjectsPage() {
         : <div className="project-grid">
           {shown.map(p => <article className="project-card-wrap" key={p.id}>
             <Link className="project-card" href={'/studio/' + p.id}>
-              <div className="project-cover"><MediaPlaceholder small/><span className={'project-status status-' + p.status}>{p.sample ? 'Sample · ' : ''}{statusText[p.status]}</span><span className="cover-format">9:16 · {totalSeconds(p)} SEC</span></div>
+              <div className="project-cover"><MediaPlaceholder small/><span className={'project-status status-' + p.status}>{p.sample ? 'Sample · ' : ''}{statusText[p.status]}</span><span className="cover-format">9:16 · {totalSeconds(p)} sec</span></div>
               <div className="project-details"><h3>{p.name}</h3>
                 <p className="project-next">{nextAction(p)}</p>
                 <span className="progress-track small" role="img" aria-label={`Step ${p.step + 1} of 7`}>{steps.map((s, k) => <span key={s} className={k < p.step ? 'done' : k === p.step ? 'current' : ''}/>)}</span>

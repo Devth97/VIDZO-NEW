@@ -26,7 +26,7 @@ export default function AdminPage() {
   const act = async (fn: () => Promise<unknown>, msg: string) => { setError(''); try { await fn(); notify(msg); await load(); } catch (e) { setError((e as Error).message); } };
   if (role !== 'admin') return <div className="page-container"><div className="empty-state panel"><ShieldCheck size={28}/><h1>Admin access required</h1><p>This area is limited to the VIDZO operations team.</p></div></div>;
   return <div className="page-container">
-    <div className="page-heading"><div><p className="eyebrow">OPERATIONS</p><h1>Admin<span className="serif-dot">.</span></h1><p>Quality review, job diagnostics, spend controls and support.</p></div></div>
+    <div className="page-heading"><div><p className="eyebrow">Operations</p><h1>Admin<span className="serif-dot">.</span></h1><p>Quality review, job diagnostics, spend controls and support.</p></div></div>
     <ErrorMessage message={error}/>
     {data && limits && <>
       <div className="stats-grid"><div className="stat-card"><span>Credits committed today</span><strong>{data.committedCreditsToday}</strong><small>Cap ₹{limits.dailySpendCapInr.toLocaleString('en-IN')} of credit value</small></div><div className="stat-card"><span>Needs attention</span><strong>{data.jobs.filter(j => j.needs_attention).length}</strong><small>Unknown provider outcomes</small></div><div className="stat-card"><span>Awaiting QA</span><strong>{data.qa.length}</strong><small>Exports blocked from download</small></div></div>

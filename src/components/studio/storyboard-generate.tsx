@@ -32,7 +32,7 @@ export function StoryboardStep({ project: p, actions }: StepProps) {
     <div className="scene-grid">{p.scenes.map((s, i) => {
       const st = states[i];
       return <article className={'scene-card ' + (st.approved ? 'is-approved' : '')} key={s.id}>
-        <div className="scene-card-header"><strong>SCENE {String(i + 1).padStart(2, '0')}</strong><span>{s.seconds}s · v{s.version}</span></div>
+        <div className="scene-card-header"><strong>Scene {String(i + 1).padStart(2, '0')}</strong><span>{s.seconds}s · v{s.version}</span></div>
         {st.frame ? <PrivateMedia asset={st.frame} alt={`${s.title} storyboard frame`} className="frame-media"/> : <div className="frame-empty"><MediaPlaceholder small label=""/><span>{st.frames ? 'Earlier frames no longer match this scene' : 'No frame yet'}</span></div>}
         <div className="scene-card-body">
           <div className="section-head" style={{ marginBottom: 8 }}>
@@ -68,7 +68,7 @@ export function GenerateStep({ project: p, actions, tier, setTier }: StepProps &
   const secs = needs.reduce((n, s) => n + s.seconds, 0);
   return <div className="studio-columns"><div>
     <div className="tier-grid">{(['professional', 'premium'] as const).map(t => <label key={t} className={'tier-card ' + (tier === t ? 'selected' : '')}>
-      <div><span className="badge">{t === 'professional' ? 'PRODUCT-FOCUSED' : 'COMPLEX MOTION'}</span><input type="radio" name="tier" checked={tier === t} onChange={() => setTier(t)}/></div>
+      <div><span className="badge">{t === 'professional' ? 'Product-focused' : 'Complex motion'}</span><input type="radio" name="tier" checked={tier === t} onChange={() => setTier(t)}/></div>
       <h3>{t === 'professional' ? 'Professional' : 'Premium'}</h3>
       <p>{t === 'professional' ? 'Clean product scenes from a benchmarked production model.' : 'Specialist models for demanding motion and interactions.'}</p>
       <strong>{pricing ? `${pricing.perSecond[t]} credits / second` : 'Pricing not configured'}</strong>
