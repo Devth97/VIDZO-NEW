@@ -1,8 +1,16 @@
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, Check, ScanLine, Layers3, Film, ShieldCheck, Receipt, Undo2 } from 'lucide-react';
+import { StudioBoard } from '@/components/studio-board';
 import { CreativeWorkspace } from '@/components/creative-workspace';
 import { placeholderPricing } from '@/lib/domain/pricing';
 import { rupees } from '@/lib/domain/schema';
+
+/** Status reflects what works today: drafting and storyboards are live; video generation opens with live services. */
+const steps = [
+  { Icon: ScanLine, title: 'Bring the spark', body: 'Upload an authorized reference. Identify the hook, pacing and shots worth exploring.', status: 'Available now', live: true },
+  { Icon: Layers3, title: 'Make it unmistakably yours', body: 'Add your product, brand and brief. Choose characters when needed, then shape each scene.', status: 'Available now', live: true },
+  { Icon: Film, title: 'Approve, then produce', body: 'Approve every storyboard frame and the credit quote. Then produce the video, scene by scene.', status: 'Video opens with live services', live: false },
+];
 
 const faqs = [
   ['What can I try for free?', 'Creating an account and a project draft is free. AI generation is separate: you see a credit quote before approving paid work. Live generation and purchases are being prepared for the beta.'],
@@ -18,11 +26,13 @@ export default function Home() {
   return <div className="editorial-home workspace-home">
     <CreativeWorkspace/>
     <div className="promise-strip"><span>Made for brand builders</span><p><ShieldCheck size={17}/>Your direction stays yours</p><p><Receipt size={17}/>A quote before you spend</p><p><Undo2 size={17}/>Redo a scene, not the whole story</p></div>
-    <section className="editorial-section method-section" id="how"><div className="method-heading"><p className="eyebrow">How the studio works</p><h2>Reference.<br/>Direction. Review.</h2><p>Keep the reference, product, brief and scene decisions together in one project.</p><Link className="editorial-link" href="/projects?new=1">Start with a draft<ArrowRight size={17}/></Link></div><div className="method-steps">
-      {[{icon:ScanLine, title:'Bring the spark.', body:'Start with an authorized reference. Identify the hook, pacing and shots worth exploring.', meta:'01 · Reference'}, {icon:Layers3, title:'Make it unmistakably yours.', body:'Add your product, brand and brief. Choose characters when needed, then review each scene.', meta:'02 · Creative direction'}, {icon:Film, title:'Approve the next move.', body:'Review the storyboard and credit quote before video production. Keep control of individual scenes.', meta:'03 · Review & produce'}].map(({icon:Icon,title,body,meta}) => <article key={meta}><span className="method-number">{meta}</span><div><Icon size={22} strokeWidth={1.5}/><h3>{title}</h3><p>{body}</p></div></article>)}
-    </div></section>
+    <StudioBoard/>
+    <section className="editorial-section playful-steps" id="how"><div className="playful-head"><p className="eyebrow">How the studio works</p><h2>Reference. Direction.<br/><em>Review.</em></h2><p>Keep the reference, product, brief and scene decisions together in one project. Nothing is generated until you approve a quote.</p></div>
+      <ol className="step-cards">{steps.map(({ Icon, title, body, status, live }, i) => <li key={title}><span className="step-no">0{i + 1}</span><Icon size={22} strokeWidth={1.5} aria-hidden="true"/><h3>{title}</h3><p>{body}</p><span className={'status-pill' + (live ? '' : ' is-planned')}>{status}</span></li>)}</ol>
+      <p className="playful-center"><Link className="button secondary" href="/projects?new=1">Start with a draft<ArrowRight size={16}/></Link></p>
+    </section>
     <section className="editorial-section price-preview"><div><p className="eyebrow">Good creative, clear costs</p><h2>Know the next step.<br/><em>And what it costs.</em></h2><p>Create your draft first. Generation starts with your approval of a quote, including the model, resolution and maximum credits.</p><Link className="editorial-link" href="/pricing">Understand the credits<ArrowUpRight size={17}/></Link></div><div className="price-preview-card"><span className="eyebrow">Illustrative starter pack</span><p className="preview-price">{rupees(pack.paise / 100)}<span>/ {pack.credits} credits</span></p><hr/><p><Check size={15}/>Prepaid credits, no compulsory subscription</p><p><Check size={15}/>Technical failures release unsettled credits</p><p className="small-text muted">Pilot pricing under validation. Purchases and generation open when live services are ready.</p><Link className="button secondary full" href="/pricing">See pricing details<ArrowRight size={16}/></Link></div></section>
     <section className="editorial-section editorial-faq" id="faq"><div><p className="eyebrow">Before your first draft</p><h2>A few good<br/><em>questions.</em></h2></div><div className="faq">{faqs.map(([q,a]) => <details key={q}><summary>{q}<span aria-hidden="true">+</span></summary><p>{a}</p></details>)}</div></section>
-    <section className="editorial-final"><div><h2>Ready to start a project?</h2><p>Private beta · Free to draft · No card needed</p></div><Link className="button primary" href="#new-draft">Create your draft<ArrowRight size={18}/></Link></section>
+    <section className="editorial-final"><div><p className="eyebrow">Private beta</p><h2>Ready to make it <em>yours?</em></h2><p>Free to draft · No card needed · Quote before generation</p></div><Link className="button primary" href="#new-draft">Create your draft<ArrowRight size={18}/></Link></section>
   </div>;
 }

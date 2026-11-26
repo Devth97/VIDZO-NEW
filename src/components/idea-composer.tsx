@@ -1,7 +1,7 @@
 'use client';
 import { useId, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowUpRight, ChevronDown, ImagePlus, ArrowRight, Plus } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, ImagePlus, ArrowRight, Plus, Check } from 'lucide-react';
 import { objectives, saveDraftIntent, type Objective } from '@/lib/draft-intent';
 import { ErrorMessage } from './ui';
 
@@ -42,7 +42,8 @@ export function IdeaComposer() {
       </div>
       <ErrorMessage message={error}/>
     </form>
-    <p id={id + '-help'} className="idea-help"><ImagePlus size={14}/>Free to draft, no card needed. Add your reference video and product photos in the studio, then approve a quote before anything is generated.</p>
+    <p id={id + '-help'} className="idea-help"><ImagePlus size={14}/>Add your reference video and product photos in the studio.</p>
+    <ul className="idea-chips" aria-label="What you get">{['Free to draft', 'No card needed', 'Quote before generation'].map(c => <li key={c}><Check size={11} strokeWidth={3} aria-hidden="true"/>{c}</li>)}</ul>
     <div className="idea-starters" role="group" aria-label="Ideas to start with"><span>Try an idea</span>{starters.map(s => <button type="button" key={s.label} onClick={() => { setIdea(s.idea); setObjective(s.objective); input.current?.focus(); }}>{s.label}<ArrowRight size={13}/></button>)}</div>
   </div>;
 }
