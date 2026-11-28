@@ -65,6 +65,13 @@ describe('scene review fields', () => {
 });
 
 describe('quote clarity', () => {
+  it('blocks final assembly while the on-screen call to action is too long', () => {
+    let p = ready();
+    p = { ...p, assets: [...p.assets, ...p.scenes.map(s => asset('clip', { sceneId: s.id, depHash: clipDepHash(p, s)! }))] };
+    expect(createQuote(p, 'professional', 'export', undefined, pricing).tasks).toHaveLength(1);
+    const long: Project = { ...p, brief: { ...p.brief, cta: 'x'.repeat(81) } };
+    expect(() => createQuote(long, 'professional', 'export', undefined, pricing)).toThrow(/80 characters/);
+  });
   it('discloses upscaling from the configured native resolution', () => {
     expect(upscaleDisclosure('720 × 1280')).toBe('Generated at 720 × 1280, then upscaled to 1080 × 1920 for delivery.');
     expect(upscaleDisclosure('1080x1920')).toBe('Generated at or above 1080 × 1920. No upscaling.');

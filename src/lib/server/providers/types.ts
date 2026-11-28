@@ -18,7 +18,7 @@ export type ProviderTask = {
 
 export type ProviderInputs = { urls: Record<string, string> };
 export type ProviderState = { state: 'queued' | 'running' | 'completed' | 'failed'; error?: string };
-export type ProviderFile = { bytes: Uint8Array; mime: string; placeholder: boolean; name: string };
+export type ProviderFile = { bytes: Uint8Array; mime: string; placeholder: boolean; name: string; meta?: Record<string, unknown> };
 
 /**
  * transient – safe to retry (rate limit, 5xx before acceptance)

@@ -31,11 +31,15 @@ export function workerProvider(cfg: { url: string; token: string }, fetchImpl: t
     async status(id) {
       const json = await call(`/jobs/${encodeURIComponent(id)}`, { headers }, false);
       const s = String(json.state);
-      return s === 'completed' ? { state: 'completed' } : s === 'failed' ? { state: 'failed', error: 'Assembly failed in the media worker.' } : { state: s === 'running' ? 'running' : 'queued' };
+      // Worker error messages are written for customers and never contain paths, URLs or tool output.
+      const error = typeof json.error === 'string' ? json.error.slice(0, 300) : 'Assembly failed in the media worker.';
+      return s === 'completed' ? { state: 'completed' } : s === 'failed' ? { state: 'failed', error } : { state: s === 'running' ? 'running' : 'queued' };
     },
     async result(id) {
+      // The technical report (output checks, upscaling, encoder settings) is kept with the export for QA and support.
+      const view = await call(`/jobs/${encodeURIComponent(id)}`, { headers }, false);
       const bytes = await downloadAllowed(`${base}/jobs/${encodeURIComponent(id)}/result`, [host], fetchImpl, { Authorization: `Bearer ${cfg.token}` });
-      return { bytes, mime: 'video/mp4', placeholder: false, name: 'export.mp4' };
+      return { bytes, mime: 'video/mp4', placeholder: false, name: 'export.mp4', meta: view.report && typeof view.report === 'object' ? { assembly: view.report } : undefined };
     },
     async reconcile(key) {
       const json = await call(`/jobs?idempotencyKey=${encodeURIComponent(key)}`, { headers }, false).catch(() => null);

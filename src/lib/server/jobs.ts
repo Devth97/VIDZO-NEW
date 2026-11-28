@@ -269,7 +269,7 @@ async function step(job: JobRow, a: AttemptRow) {
       const [locked] = await q.query<{ status: string }>('select status from public.attempts where id = $1 for update', [a.id]);
       if (terminal(locked.status)) return;
       const [{ n }] = await q.query<{ n: string }>('select count(*) n from public.assets where project_id = $1 and kind = $2 and coalesce(scene_id, \'\') = coalesce($3, \'\') and coalesce(candidate_id, \'\') = coalesce($4, \'\')', [job.project_id, task.kind, task.sceneId ?? null, task.candidateId ?? null]);
-      const outputId = await storeOutput(q, job.workspace_id, { id: job.project_id }, { kind: task.kind, name: file.name, mime: file.mime, bytes: file.bytes, placeholder: file.placeholder, sceneId: task.sceneId, candidateId: task.candidateId, depHash: task.depHash, version: Number(n) + 1, jobId: job.id });
+      const outputId = await storeOutput(q, job.workspace_id, { id: job.project_id }, { kind: task.kind, name: file.name, mime: file.mime, bytes: file.bytes, placeholder: file.placeholder, sceneId: task.sceneId, candidateId: task.candidateId, depHash: task.depHash, version: Number(n) + 1, jobId: job.id, meta: file.meta });
       await q.query("update public.attempts set status = 'succeeded', output_asset_id = $2, error = null, updated_at = now() where id = $1", [a.id, outputId]);
     });
   } catch (e) {

@@ -302,6 +302,7 @@ export function quoteTasks(p: Project, tier: Tier, scope: QuoteScope, targetId: 
     case 'export': {
       const h = exportDepHash(p);
       if (!h) throw new Error('Every scene needs a current, reviewed clip before final assembly.');
+      if (p.brief.cta.trim().length > ctaMaxOnScreen) throw new Error(`Shorten the call to action to ${ctaMaxOnScreen} characters or fewer so it fits on screen.`);
       return [{ taskId: id(), kind: 'export', depHash: h, credits: pricing.export }];
     }
   }
@@ -324,6 +325,9 @@ export function createQuote(p: Project, tier: Tier, scope: QuoteScope, targetId:
     fingerprint: quoteFingerprint(p, tier, scope, targetId, pricing, tasks),
   };
 }
+
+/** The CTA is drawn on a 1080 px wide frame; longer text would not stay legible (the media worker enforces it too). */
+export const ctaMaxOnScreen = 80;
 
 export const deliveryTarget = { width: 1080, height: 1920, fps: 30, label: '1080 × 1920 MP4 · 30 fps · H.264/AAC' } as const;
 

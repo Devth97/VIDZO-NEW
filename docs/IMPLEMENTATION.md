@@ -58,8 +58,18 @@ How it works:
 - `GET /api/jobs/[id]` only reads persisted state; polling no longer drives work. `POST /api/jobs` still starts the first steps in `after()`.
 - Each sweep writes a heartbeat to `admin_settings.runner`. The admin page shows it, and `/api/health` returns `runnerAgeSeconds` so a deploy check can confirm the cron fires.
 
+## Media worker (28 November 2026)
+
+`services/media-worker` is the assembly service behind `providers/worker.ts`. It renders the 1080 × 1920 / 30 fps H.264/AAC deliverable from the current approved clips, with the exact logo and CTA overlay. Customer audio is excluded and the track is silent until licensed music exists. Each output is ffprobe-checked and decoded in full before the result is offered. See its README for the API, limits and licensing.
+
+- Idempotent by the app's attempt key, and reconcilable with `GET /jobs?idempotencyKey=`. A restart resumes unfinished renders.
+- The technical report (output checks, upscaling, encoder and FFmpeg version) is stored on the export asset as `meta.assembly` for QA and support.
+- Failure reasons are customer-safe and pass through to the job. A failed assembly releases its credits like any technical failure, and the user can request a fresh quote.
+- The export quote refuses a CTA over 80 characters, because longer text would not fit legibly on screen. The Brand step limits new input to 80 characters.
+- Human QA approval is still required before any export can be downloaded.
+
 ## Not built yet
 
-- FFmpeg media worker service (`services/media-worker`): the adapter contract exists in `providers/worker.ts`.
+- Hosting for the media worker. The service, its tests and Dockerfile exist (`services/media-worker`); it still needs a container host, `MEDIA_WORKER_URL`/`MEDIA_WORKER_TOKEN` in the Worker, and R2 configured so clips have signed HTTPS URLs.
 - Playwright E2E/axe specs, CI workflow, Lighthouse runs, CSP header.
 - Custom-domain activation and end-to-end hosted Google sign-in verification. The basic Workers deployment and GitHub workflow now exist; see `docs/DEPLOYMENT.md`.
