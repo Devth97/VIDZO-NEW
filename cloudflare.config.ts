@@ -27,6 +27,10 @@ export default defineConfig({
       R2_BUCKET: bindings.text("vidzo-media"),
       R2_ACCESS_KEY_ID: bindings.secret(),
       R2_SECRET_ACCESS_KEY: bindings.secret(),
+      // FFmpeg media worker on Cloud Run (request-billed, so the synchronous render mode).
+      MEDIA_WORKER_URL: bindings.text("https://vidzo-media-worker-344943560089.us-central1.run.app"),
+      MEDIA_WORKER_MODE: bindings.text("sync"),
+      MEDIA_WORKER_TOKEN: bindings.secret(),
       HYPERDRIVE: bindings.hyperdrive({ id: "1cb835e255244016b66acd64f1da19ca", dev: { remote: true } }),
     },
   }),

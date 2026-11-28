@@ -76,5 +76,6 @@ jobs:
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          MEDIA_WORKER_TOKEN: ${{ secrets.MEDIA_WORKER_TOKEN }}
       - name: Verify hosted database readiness
         run: curl --fail --retry 5 --retry-all-errors --retry-delay 5 --max-time 20 https://vidzo-studio.promptpacktech.workers.dev/api/health
