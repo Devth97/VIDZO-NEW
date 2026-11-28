@@ -381,6 +381,9 @@ describe('durable runner (cron sweep)', () => {
 describe.runIf(pgUrl)('real PostgreSQL concurrency', () => {
   const reserve = (ws: string, op: string, amount: number) => db.query(`select public.wallet_reserve($1, $2, $3, null)`, [ws, op, amount]);
   const settled = <T,>(ps: Promise<T>[]) => Promise.allSettled(ps);
+  const reasons = (rs: PromiseSettledResult<unknown>[]) => rs.filter(r => r.status === 'rejected').map(r => String((r as PromiseRejectedResult).reason)).join(' | ');
+  // Earlier tests leave recent failed attempts, which would trip the provider circuit breaker here.
+  beforeAll(async () => { await db.query("update public.attempts set updated_at = now() - interval '1 hour' where status = 'failed'"); });
 
   it('parallel holds can never overspend a wallet', async () => {
     const ctx = await user('race-hold@example.test');
@@ -422,7 +425,7 @@ describe.runIf(pgUrl)('real PostgreSQL concurrency', () => {
     const q = await jobs.createServerQuote(db, ctx, { projectId: p.id, tier: 'professional', scope: 'frame' });
     const results = await settled(Array.from({ length: 8 }, (_, i) => jobs.createJob(ctx, { quoteId: q.id, idempotencyKey: i % 2 ? q.id : `${q.id}-other` })));
     const ids = new Set(results.filter(r => r.status === 'fulfilled').map(r => (r as PromiseFulfilledResult<{ id: string }>).value.id));
-    expect(ids.size).toBe(1);
+    expect(ids.size, reasons(results)).toBe(1);
     expect(await db.query('select 1 from public.jobs where quote_id = $1', [q.id])).toHaveLength(1);
     expect((await repo.loadWallet(db, ctx.workspaceId)).held).toBe(q.credits);
   });
@@ -434,7 +437,8 @@ describe.runIf(pgUrl)('real PostgreSQL concurrency', () => {
     const projects = [await readyProject(ctx), await readyProject(ctx), await readyProject(ctx)];
     const quotes = await Promise.all(projects.map(p => jobs.createServerQuote(db, ctx, { projectId: p.id, tier: 'professional', scope: 'frame' })));
     const results = await settled(quotes.map(q => jobs.createJob(ctx, { quoteId: q.id, idempotencyKey: q.id })));
-    expect(results.filter(r => r.status === 'fulfilled')).toHaveLength(2); // perUserConcurrency defaults to 2
+    expect(results.filter(r => r.status === 'fulfilled'), reasons(results)).toHaveLength(2); // perUserConcurrency defaults to 2
+    expect(reasons(results)).toMatch(/2 jobs at a time/);
     const [{ n }] = await db.query<{ n: string }>("select count(*) n from public.jobs where user_id = $1 and kind <> 'analysis' and status in ('queued', 'submitted', 'running')", [ctx.userId]);
     expect(Number(n)).toBe(2);
   });
