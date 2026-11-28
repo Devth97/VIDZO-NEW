@@ -1,0 +1,46 @@
+{
+  "purpose": "User-supplied visual references, not VIDZO-generated results or endorsements.",
+  "processing": "Full-length silent H.264 previews, max 480px wide, 24fps, web faststart. Originals unchanged.",
+  "clips": [
+    {
+      "asset": "street-tote",
+      "supplied_file": "8mwespY-a2mgC1Vtjmj5P.mp4"
+    },
+    {
+      "asset": "truck-reveal",
+      "supplied_file": "idRu8DcGon1kCmfEN5wV6.mp4"
+    },
+    {
+      "asset": "cat-bed",
+      "supplied_file": "TU-A8vAfQPW4SAuAp4w_l.mp4"
+    },
+    {
+      "asset": "poolside-bag",
+      "supplied_file": "Gt1uPWr1MmwsiyFXgDajI.mp4"
+    },
+    {
+      "asset": "headphone-detail",
+      "supplied_file": "PIpEahpNhS9x6Hr61x_Oz.mp4"
+    },
+    {
+      "asset": "web-sneakers",
+      "supplied_file": "spider-web-object-retrieval.mp4"
+    },
+    {
+      "asset": "checkered-mug",
+      "supplied_file": "result.mp4"
+    },
+    {
+      "asset": "bathroom-remake",
+      "supplied_file": "viral_cloned.mp4"
+    },
+    {
+      "asset": "cleaner-demo",
+      "supplied_file": "result-FTNgcM2IbV2l-Ix1Sq9Y-.mp4"
+    },
+    {
+      "asset": "bathroom-original",
+      "supplied_file": "viral_original.mp4"
+    }
+  ]
+}
