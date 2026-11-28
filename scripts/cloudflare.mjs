@@ -28,7 +28,10 @@ if (action === 'deploy') {
   // Upload only explicitly named app secrets, never the global environment.
   mkdirSync(new URL('../.data/', import.meta.url), { recursive: true });
   const secretsFile = fileURLToPath(new URL('../.data/cloudflare-secrets.json', import.meta.url));
-  writeFileSync(secretsFile, JSON.stringify({ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: values.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }), { mode: 0o600 });
+  const named = ['NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY'];
+  const missing = named.filter(k => !values[k]);
+  if (missing.length) throw new Error(`Missing deployment secrets: ${missing.join(', ')}.`);
+  writeFileSync(secretsFile, JSON.stringify(Object.fromEntries(named.map(k => [k, values[k]]))), { mode: 0o600 });
   const result = run('../node_modules/cf/bin/cf', ['deploy', '--prebuilt', ...(!ci ? ['--profile', 'vidzo-personal'] : []), '--secrets-file', secretsFile, ...args]);
   process.exit(result.status ?? 1);
 }

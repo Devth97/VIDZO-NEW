@@ -22,6 +22,11 @@ export default defineConfig({
       NEXT_PUBLIC_SUPABASE_URL: bindings.text("https://pehaquzsqeiocjirogei.supabase.co"),
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: bindings.secret(),
       VIDZO_DATABASE_BINDING: bindings.text("hyperdrive"),
+      // Private media bucket. The access key pair signs browser upload/download URLs (S3 API).
+      R2_ACCOUNT_ID: bindings.text("a18166538751152974d6594a321c30ef"),
+      R2_BUCKET: bindings.text("vidzo-media"),
+      R2_ACCESS_KEY_ID: bindings.secret(),
+      R2_SECRET_ACCESS_KEY: bindings.secret(),
       HYPERDRIVE: bindings.hyperdrive({ id: "1cb835e255244016b66acd64f1da19ca", dev: { remote: true } }),
     },
   }),
