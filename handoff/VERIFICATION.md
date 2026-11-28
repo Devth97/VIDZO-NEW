@@ -1,5 +1,17 @@
 # Verification log
 
+## 28 November 2026 — Slice 1: quote and review clarity (Claude)
+
+| Check | Result |
+| --- | --- |
+| Baseline before changes | `pnpm typecheck` passed; `pnpm test` 7 files, 70 tests passed |
+| `pnpm typecheck`, `pnpm typecheck:cloudflare` | Passed |
+| `pnpm test` | Passed: 8 files, 77 tests (7 new in `tests/review.test.ts`) |
+| `pnpm build`, `pnpm build:vinext` | Passed |
+| Browser, demo mode, real Chrome via Playwright | Sample project → frame quote → keyboard confirm → simulated frames → approve all. Purpose change kept all 3 approvals; a product action on scene 2 removed only scene 2's approval; clearing it restored the approval. Video quote shows duration, 9:16, scene count, delivery format, model, native resolution, upscale disclosure, per-item credits, available/held/after-hold and the three failure/redraw outcomes. Advancing the page clock past expiry replaced Confirm with "Get a fresh quote". No horizontal overflow at 320/360/768/1024/1440 px on Storyboard, Generate, Brand and the quote dialog. axe WCAG A/AA: 0 violations on both quote dialogs and the storyboard. No console or page errors |
+| Fixed during QA | Dialog focus fell to the close button because Confirm is disabled while the quote request finishes, so Enter closed the dialog. Initial focus now goes to the quote summary (Enter alone can never confirm a spend) without scrolling the dialog title away on phones |
+| Not verified | The product-photo comparison and its required "product matches my photos" check were not exercised in a browser: the demo sample has no product photos. Covered by code review only. Live mode with real pricing, wallet holds and provider jobs not exercised |
+
 ## 25 November 2026 — creation-first UI and Astryx (Claude)
 
 | Check | Result |

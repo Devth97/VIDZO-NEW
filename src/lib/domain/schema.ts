@@ -56,12 +56,19 @@ export type Role = z.infer<typeof roleSchema>;
 export const candidateSchema = z.object({ id: z.string().min(1).max(80), roleId: z.string().max(80), name: z.string().max(80), description: z.string().max(1000), roleDescription: z.string().max(1000) });
 export type Candidate = z.infer<typeof candidateSchema>;
 
+/** What a scene is for in the ad. A label for planning and review; it does not change generation. */
+export const scenePurposes = ['hook', 'problem', 'demonstration', 'reveal', 'benefit', 'invitation'] as const;
+export type ScenePurpose = typeof scenePurposes[number];
+
 export const approvalSchema = z.object({ frameAssetId: z.uuid(), depHash: z.string().max(80), at: z.string() });
 export const sceneSchema = z.object({
   id: z.string().min(1).max(80), title: z.string().max(120), seconds: z.number().int().min(2).max(8),
   prompt: z.string().min(1).max(4000), roleIds: z.array(z.string().max(80)).max(2), locked: z.boolean(),
   version: z.number().int().positive(),
-  history: z.array(z.object({ version: z.number().int(), prompt: z.string(), seconds: z.number().int(), at: z.string() })).max(200),
+  purpose: z.enum(scenePurposes).optional(),
+  /** What the product does on screen. Generation input: changing it invalidates this scene's frame. */
+  productAction: z.string().max(500).optional(),
+  history: z.array(z.object({ version: z.number().int(), prompt: z.string(), seconds: z.number().int(), productAction: z.string().optional(), at: z.string() })).max(200),
   /** Server-owned. Valid only while depHash equals the scene's current dependency hash. */
   approval: approvalSchema.nullable(),
 });
@@ -71,6 +78,8 @@ export const briefSchema = z.object({
   brand: z.string().max(100), product: z.string().max(200), color: z.string().regex(/^#[0-9a-fA-F]{6}$/), font: z.string().max(100),
   objective: z.string().max(500), audience: z.string().max(1000), language: z.string().max(80), tone: z.string().max(200),
   cta: z.string().max(200), offer: z.string().max(500), claims: z.string().max(2000), differences: z.string().max(2000),
+  /** What must stay exact about the product. Sent with every frame/clip request and listed beside frames for review. */
+  fidelity: z.object({ shape: z.string().max(500), colour: z.string().max(500), packaging: z.string().max(500), prohibited: z.string().max(1000) }).partial().optional(),
 });
 export type Brief = z.infer<typeof briefSchema>;
 

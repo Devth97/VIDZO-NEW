@@ -107,7 +107,7 @@ export function selectCandidate(p: Project, roleId: string, candidateId: string,
 export const sceneLimits = { max: 4, minTotal: 10, maxTotal: 15, minSeconds: 2, maxSeconds: 8 } as const;
 export const totalSeconds = (p: Pick<Project, 'scenes'>) => p.scenes.reduce((n, s) => n + s.seconds, 0);
 
-export function updateScene(p: Project, id: string, patch: Partial<Pick<Scene, 'title' | 'prompt' | 'seconds' | 'roleIds'>>): Project {
+export function updateScene(p: Project, id: string, patch: Partial<Pick<Scene, 'title' | 'prompt' | 'seconds' | 'roleIds' | 'purpose' | 'productAction'>>): Project {
   const found = p.scenes.find(s => s.id === id);
   if (!found) throw new Error('Scene not found.');
   if (found.locked) throw new Error('Unlock this scene before editing.');
@@ -116,13 +116,17 @@ export function updateScene(p: Project, id: string, patch: Partial<Pick<Scene, '
   if (!Number.isInteger(next.seconds) || next.seconds < sceneLimits.minSeconds || next.seconds > sceneLimits.maxSeconds) throw new Error('Each scene must be 2–8 seconds.');
   const roles = p.analysis?.roles ?? [];
   if (next.roleIds.length > 2 || next.roleIds.some(r => !roles.some(x => x.id === r))) throw new Error('Choose roles from your analysis.');
-  const substantive = next.prompt !== found.prompt || next.seconds !== found.seconds || canonical(next.roleIds) !== canonical(found.roleIds);
-  if (!substantive && next.title === found.title) return p;
+  const substantive = sceneChanged(found, next);
+  if (!substantive && next.title === found.title && next.purpose === found.purpose) return p;
   const scene: Scene = substantive
-    ? { ...next, version: found.version + 1, history: [...found.history, { version: found.version, prompt: found.prompt, seconds: found.seconds, at: new Date().toISOString() }].slice(-200) }
+    ? { ...next, version: found.version + 1, history: [...found.history, historyEntry(found, new Date().toISOString())].slice(-200) }
     : next;
   return { ...p, scenes: p.scenes.map(s => (s.id === id ? scene : s)) };
 }
+
+/** Generation inputs of a scene. Title and purpose are labels; changing them keeps frames and approvals. */
+export const sceneChanged = (a: Scene, b: Scene) => a.prompt !== b.prompt || a.seconds !== b.seconds || canonical(a.roleIds) !== canonical(b.roleIds) || (a.productAction?.trim() || '') !== (b.productAction?.trim() || '');
+export const historyEntry = (s: Scene, at: string): Scene['history'][number] => ({ version: s.version, prompt: s.prompt, seconds: s.seconds, productAction: s.productAction?.trim() || undefined, at });
 
 export function addScene(p: Project): Project {
   if (p.scenes.length >= sceneLimits.max) throw new Error('A storyboard can have up to four scenes.');
@@ -156,6 +160,13 @@ export const visualBriefKeys = ['brand', 'product', 'color', 'tone', 'difference
 export const overlayBriefKeys = ['brand', 'cta', 'font', 'offer', 'claims', 'language'] as const satisfies readonly (keyof Brief)[];
 
 const pick = <K extends keyof Brief>(b: Brief, keys: readonly K[]) => Object.fromEntries(keys.map(k => [k, b[k]]));
+
+export const fidelityLabels = { shape: 'Shape and proportions', colour: 'Colours and finish', packaging: 'Packaging and label text', prohibited: 'Must never change' } as const;
+/** Non-empty product fidelity notes, in display order. Empty notes are omitted so older projects keep their hashes. */
+export function fidelityNotes(b: Brief): [keyof typeof fidelityLabels, string][] {
+  return (Object.keys(fidelityLabels) as (keyof typeof fidelityLabels)[]).map(k => [k, b.fidelity?.[k]?.trim() ?? ''] as [keyof typeof fidelityLabels, string]).filter(([, v]) => v);
+}
+const fidelityKey = (b: Brief) => { const n = fidelityNotes(b); return n.length ? Object.fromEntries(n) : undefined; };
 const usable = (a: Asset) => a.status === 'verified';
 function latest(assets: Asset[]): Asset | undefined {
   return [...assets].sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : (a.version ?? 0) - (b.version ?? 0))).at(-1);
@@ -173,7 +184,8 @@ function identityKey(p: Project, roleId: string) {
 }
 
 export function sceneDepHash(p: Project, s: Scene): string {
-  return stableHash({ v: 1, scene: { id: s.id, prompt: s.prompt, seconds: s.seconds, roleIds: s.roleIds }, brief: pick(p.brief, visualBriefKeys), products: productAssets(p).map(a => a.id).sort(), identities: s.roleIds.map(r => identityKey(p, r)) });
+  // Optional inputs are left undefined when empty: canonical() drops them, so projects without them keep their hashes.
+  return stableHash({ v: 1, scene: { id: s.id, prompt: s.prompt, seconds: s.seconds, roleIds: s.roleIds, productAction: s.productAction?.trim() || undefined }, brief: pick(p.brief, visualBriefKeys), fidelity: fidelityKey(p.brief), products: productAssets(p).map(a => a.id).sort(), identities: s.roleIds.map(r => identityKey(p, r)) });
 }
 
 export const currentFrame = (p: Project, s: Scene) => { const h = sceneDepHash(p, s); return latest(p.assets.filter(a => a.kind === 'frame' && a.sceneId === s.id && a.depHash === h && usable(a))); };
@@ -313,6 +325,21 @@ export function createQuote(p: Project, tier: Tier, scope: QuoteScope, targetId:
   };
 }
 
+export const deliveryTarget = { width: 1080, height: 1920, fps: 30, label: '1080 × 1920 MP4 · 30 fps · H.264/AAC' } as const;
+
+/** Plain-language upscale disclosure for a configured native resolution such as "720 × 1280" or "1080x1920". */
+export function upscaleDisclosure(native: string): string {
+  const m = native.match(/(\d{3,4})\s*[x×]\s*(\d{3,4})/i);
+  if (!m) return 'Native resolution is disclosed once the production endpoint is benchmarked. Any upscale to 1080 × 1920 will be stated.';
+  const [w, h] = [Number(m[1]), Number(m[2])].sort((a, b) => a - b);
+  return w >= deliveryTarget.width && h >= deliveryTarget.height ? 'Generated at or above 1080 × 1920. No upscaling.' : `Generated at ${w} × ${h}, then upscaled to 1080 × 1920 for delivery.`;
+}
+
+/** Why a quote can no longer be confirmed, or null while it is valid against the current project. */
+export function quoteProblem(p: Project, quote: Quote, pricing: Pricing, now = Date.now()): string | null {
+  try { assertQuote(p, quote, pricing, now); return null; } catch (e) { return (e as Error).message; }
+}
+
 export function assertQuote(p: Project, quote: Quote, pricing: Pricing, now = Date.now()) {
   if (now >= quote.expiresAt) throw new Error('This quote expired. Request a fresh quote.');
   if (quote.projectId !== p.id || quote.pricingVersion !== pricing.version) throw new Error('The project changed. Review it and request a new quote.');
@@ -369,7 +396,9 @@ export function buildScenePrompt(p: Project, s: Scene): string {
   const identities = s.roleIds.map(r => p.candidates.find(c => c.id === p.selections[r])?.description).filter(Boolean);
   return [
     s.prompt.trim(),
+    ...(s.productAction?.trim() ? [`Product action: ${s.productAction.trim()}`] : []),
     `Product: ${p.brief.product} by ${p.brief.brand}. Preserve the exact product shape, material, colour and packaging from the supplied photos.`,
+    ...fidelityNotes(p.brief).map(([k, v]) => `${fidelityLabels[k]}: ${v}`),
     `Mood: ${p.brief.tone}. Accent colour ${p.brief.color}.`,
     identities.length ? `Characters: ${identities.join(' | ')}. Original adults only; no resemblance to real people.` : 'No people.',
     'Vertical 9:16. No text, logos, watermarks or third-party marks; the exact logo and call to action are added later as overlays.',

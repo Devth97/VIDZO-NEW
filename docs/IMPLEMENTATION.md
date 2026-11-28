@@ -28,6 +28,13 @@ Live sign-in uses Google through Supabase (`POST /api/auth/google` → PKCE call
 - **Payments.** Orders are created server-side from the server pack table. Credits come only from `payment_capture` via an HMAC-verified webhook whose amount and currency match the order; events are deduplicated by id; a capture is idempotent; a late failure cannot undo it.
 - **Media.** Uploads go straight to private storage by signed URL, then the server checks the size, magic bytes and container/codec/duration (MP4/MOV `ftyp`/`moov`/`mvhd`/`stsd`) or the image type and dimensions. Rejected files are deleted without charge. Provider result downloads are https-only, exact-host allowlisted, redirect-free and size-capped.
 
+## Quote and review clarity (28 November 2026)
+
+- **Quote review** (`components/studio/quote-review.tsx`): deliverable (duration, 9:16, scene count, 1080 × 1920 30 fps H.264/AAC target), model, native resolution with an upscale disclosure (`upscaleDisclosure`), per-item credits, maximum credits, available/held/after-hold balances, the technical-failure / quality-review / paid-redraw distinction, retry policy and a live expiry countdown. An expired quote, or one that no longer matches a project edited after it arrived (`quoteProblem`), offers only "Get a fresh quote". The server still re-derives every quote before spending.
+- **Scenes** carry an optional `purpose` (label only: no invalidation) and `productAction` (generation input: versioned, in the dependency hash and the prompt). Empty optional fields are left out of hashes, so existing approvals survive the schema change.
+- **Product fidelity**: `brief.fidelity` (shape, colour, packaging text, prohibited changes) is sent in every frame/clip prompt and shown beside the customer's original product photos in the storyboard. When product photos exist, approving a frame requires ticking that the product matches them; the tick belongs to that frame only. Adding notes invalidates frames made without them.
+- **Job states** name each item by scene, explain held/settled/released credits, the unknown-outcome check, review, and technical failure (free retry quote plus support link).
+
 ## Not built yet
 
 - FFmpeg media worker service (`services/media-worker`): the adapter contract exists in `providers/worker.ts`.

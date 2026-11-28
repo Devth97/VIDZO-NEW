@@ -2,14 +2,15 @@
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion, MotionConfig } from 'motion/react';
-import { ChevronLeft, Check, ShieldCheck, CloudOff, AlertTriangle, RotateCcw } from 'lucide-react';
+import { ChevronLeft, Check, CloudOff, AlertTriangle, RotateCcw } from 'lucide-react';
 import { useWorkspace } from '@/components/workspace-provider';
 import { ErrorMessage, Loading, Modal } from '@/components/ui';
 import { ReferenceStep, AnalysisStep } from '@/components/studio/reference-analysis';
 import { CharactersStep, BrandStep } from '@/components/studio/characters-brand';
 import { StoryboardStep, GenerateStep, ExportStep } from '@/components/studio/storyboard-generate';
 import { useProjectEditor } from '@/components/studio/use-project';
-import { describeQuote, jobActive, useJob, type StudioActions } from '@/components/studio/shared';
+import { jobActive, useJob, type StudioActions } from '@/components/studio/shared';
+import { QuoteReview } from '@/components/studio/quote-review';
 import { createDemoBackend } from '@/components/backend';
 import { stepBlocker, totalSeconds } from '@/lib/domain/project';
 import { steps, type JobView, type Quote, type QuoteScope, type Tier } from '@/lib/domain/schema';
@@ -74,7 +75,7 @@ export default function StudioPage({ params }: { params: Promise<{ id: string }>
   async function confirm() {
     if (!quote) return;
     await guarded(async () => {
-      if (Date.now() >= quote.expiresAt) throw new Error('This quote expired. Request a fresh one.');
+      if (Date.now() >= quote.expiresAt) throw new Error('This quote expired. Get a fresh one; nothing was held.');
       const j = await ctx.backend.submit(quote, quote.id); // the quote id is the idempotency key: repeat clicks reuse the same job
       setQuote(undefined); setJobId(j.id);
       void ctx.refresh();
@@ -127,20 +128,9 @@ export default function StudioPage({ params }: { params: Promise<{ id: string }>
       {nextBlocker && <span className="small-text muted next-hint">{nextBlocker}</span>}
       {project.step < 6 ? <button className="button primary" disabled={busy || Boolean(nextBlocker)} onClick={() => void go(project.step + 1)}>Continue to {steps[project.step + 1]}</button> : <Link className="button secondary" href="/projects">Back to projects</Link>}
     </div>
-    <Modal open={Boolean(quote)} close={() => { if (!busy) setQuote(undefined); }} title={quote?.illustrative ? 'Review your quote (placeholder pricing)' : 'Confirm your maximum spend'}>
-      {quote && <>
-        <div className="notice"><ShieldCheck size={18}/>{ctx.demo ? 'Explore mode: simulated credits, placeholder outputs, no provider calls.' : quote.illustrative ? 'Local test backend: placeholder pricing and labelled placeholder outputs. No provider is called.' : 'You will never be charged more than this without new consent.'}</div>
-        <div className="quote-detail"><span>Work</span><strong>{describeQuote(quote)}</strong></div>
-        <div className="quote-detail"><span>Maximum credits</span><strong>{quote.credits}</strong></div>
-        <div className="quote-detail"><span>Available now</span><strong>{ctx.wallet.available}</strong></div>
-        <div className="quote-detail"><span>Model</span><strong>{quote.model}</strong></div>
-        <div className="quote-detail"><span>Native output</span><strong>{quote.nativeResolution}</strong></div>
-        <div className="quote-detail"><span>Quote expires</span><strong>{new Date(quote.expiresAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</strong></div>
-        <p className="small-text muted" style={{ margin: '16px 0 20px' }}>{quote.retryPolicy}</p>
-        <ErrorMessage message={error}/>
-        <button className="button primary full" onClick={() => void confirm()} disabled={busy || ctx.wallet.available < quote.credits}>{busy ? 'Submitting…' : ctx.wallet.available < quote.credits ? 'Not enough credits' : quote.credits === 0 ? 'Confirm · no credits' : `Confirm up to ${quote.credits} credits`}</button>
-        {ctx.wallet.available < quote.credits && <Link className="text-button" href="/wallet">Add credits to your wallet</Link>}
-      </>}
+    <Modal open={Boolean(quote)} close={() => { if (!busy) setQuote(undefined); }} title={quote?.illustrative ? 'Review your quote (placeholder pricing)' : 'Review your quote'}>
+      {quote && project && <QuoteReview key={quote.id} quote={quote} project={project} pricing={ctx.pricing} wallet={ctx.wallet} demo={ctx.demo} busy={busy} error={error}
+        onConfirm={() => void confirm()} onRefresh={() => actions.requestQuote(quote.scope, quote.targetId)}/>}
     </Modal>
   </div>;
 }

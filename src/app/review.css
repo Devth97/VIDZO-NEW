@@ -1,0 +1,80 @@
+/* Quote, scene review and job states in the studio. Uses the paper/olive/ink tokens from globals.css and playful.css. */
+
+/* Definition lists reuse .quote-detail rows */
+.quote-detail dt{color:var(--muted)}
+.quote-detail dd{margin:0;text-align:right;font-family:var(--mono);font-weight:500}
+.quote-review{display:grid;gap:20px}
+.quote-review section{display:grid;gap:8px}
+.quote-heading{font-size:.75rem;font-weight:650;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.quote-list{margin:0}
+.quote-note{margin:0}
+.quote-items{list-style:none;margin:0;padding:10px 12px;display:grid;gap:6px;background:var(--surface-soft);border-radius:12px;font-size:.8125rem}
+.quote-items li{display:flex;justify-content:space-between;gap:12px}
+.quote-items strong{font-family:var(--mono);font-weight:500;white-space:nowrap}
+
+.quote-ceiling{padding:16px;border:1.5px solid var(--ink);border-radius:16px;background:var(--lime-soft,#eef9c4);box-shadow:var(--raise,2px 3px 0 #25291f)}
+.quote-max{display:flex;align-items:baseline;gap:10px;margin:0}
+.quote-max strong{font-family:var(--heading);font-size:2.25rem;line-height:1;font-variant-numeric:tabular-nums}
+.quote-max span{font-size:.8125rem;color:var(--muted)}
+.quote-wallet,.wallet-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0}
+.quote-wallet div,.wallet-strip div{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;min-width:0}
+.quote-wallet dt,.wallet-strip dt{font-size:.6875rem;color:var(--muted);line-height:1.3}
+.quote-wallet dd,.wallet-strip dd{margin:2px 0 0;font-family:var(--mono);font-size:1rem;font-variant-numeric:tabular-nums}
+.quote-wallet dd.is-short{color:var(--danger)}
+.wallet-strip{margin:0 0 16px}
+
+.quote-outcomes{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.quote-outcomes li{display:flex;gap:10px;align-items:flex-start;font-size:.8125rem;line-height:1.5}
+.quote-outcomes li>svg{flex-shrink:0;margin-top:3px;color:var(--primary)}
+.quote-outcomes strong{display:block;font-size:.8125rem}
+.quote-outcomes span{color:var(--muted)}
+
+.quote-expiry{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0;font-size:.8125rem}
+.quote-expiry strong{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.quote-expiry.is-stale{color:var(--warning);font-weight:550}
+
+/* Product fidelity reference */
+.product-check-panel{margin-bottom:20px}
+.product-reference{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start;margin-top:12px}
+.product-reference.is-compact{grid-template-columns:1fr;gap:10px}
+.product-reference-photos{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
+.product-reference-photos .media-frame{aspect-ratio:1;min-height:0;border:1px solid var(--border)}
+.fidelity-notes{margin:0;display:grid;gap:8px}
+.fidelity-notes div{padding:8px 10px;border-radius:10px;background:var(--surface-soft)}
+.fidelity-notes dt{font-size:.6875rem;font-weight:650;color:var(--muted)}
+.fidelity-notes dd{margin:2px 0 0;font-size:.8125rem;line-height:1.45}
+.fidelity-notes .is-prohibited{background:#fbebe7;border:1px solid #efc9c1}
+.fidelity-notes .is-prohibited dt{color:var(--danger)}
+
+/* Scene cards */
+.scene-frame{position:relative}
+.frame-tag{position:absolute;left:10px;bottom:10px;display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;background:var(--surface);border:1.5px solid var(--ink);font-size:.6875rem;font-weight:600}
+.field-label{display:block;font-size:.75rem;font-weight:600;margin:10px 0 4px}
+.scene-card-body input:not([type=checkbox]):not(.title-input){font-size:.8125rem}
+.scene-roles{border:0;padding:0;margin:10px 0 0;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.75rem}
+.scene-roles legend{font-size:.75rem;font-weight:600;margin-bottom:4px}
+.scene-roles .check-label{font-size:.75rem;margin:0}
+.frame-compare{margin:8px 0;font-size:.8125rem}
+.frame-compare summary{cursor:pointer;font-weight:550;color:var(--primary);min-height:32px;display:flex;align-items:center}
+.frame-compare[open] summary{margin-bottom:8px}
+.product-ok{padding:8px 10px;border-radius:10px;background:var(--surface-soft);font-size:.8125rem}
+
+/* Job states */
+.job-panel strong{display:inline-flex;align-items:center;gap:8px}
+.job-panel.is-review{border-left-color:var(--warning)}
+.job-tasks .task-unknown span:last-child{color:var(--warning)}
+.job-tasks .task-failed span:last-child{color:var(--danger)}
+.spin-slow{animation:spin-slow 2.4s linear infinite}
+@keyframes spin-slow{to{transform:rotate(360deg)}}
+
+@media (max-width:640px){
+  .product-reference{grid-template-columns:1fr}
+  .quote-wallet,.wallet-strip{grid-template-columns:1fr 1fr 1fr;gap:6px}
+  .quote-wallet div,.wallet-strip div{padding:6px 8px}
+  .quote-max strong{font-size:1.75rem}
+}
+@media (prefers-reduced-motion:reduce){.spin-slow{animation:none}}
+
+.modal:has(.quote-review){width:min(94%,560px);max-height:92dvh;overflow:auto}
+.quote-review:focus{outline:none}
+.quote-review:focus-visible{outline:2px dashed #9eb775;outline-offset:6px;border-radius:12px}

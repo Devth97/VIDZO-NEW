@@ -1,5 +1,4 @@
-import { canonical } from './hash';
-import { roleCandidates, stepBlocker, validateAnalysis, currentSheet } from './project';
+import { roleCandidates, stepBlocker, validateAnalysis, currentSheet, sceneChanged, historyEntry } from './project';
 import { projectSchema, type Project, type Scene } from './schema';
 
 export class ConflictError extends Error { constructor(message = 'This project changed in another tab or device. Reload to continue.') { super(message); } }
@@ -39,12 +38,12 @@ export function mergeClientEdits(stored: Project, raw: unknown, opts: { requireS
     if (s.roleIds.some(r => !roles.some(x => x.id === r))) throw new Error('A scene refers to a role that does not exist.');
     const prev = stored.scenes.find(x => x.id === s.id);
     if (!prev) return { ...s, version: 1, history: [], approval: null };
-    const substantive = prev.prompt !== s.prompt || prev.seconds !== s.seconds || canonical(prev.roleIds) !== canonical(s.roleIds);
+    const substantive = sceneChanged(prev, s);
     if (substantive && prev.locked && s.locked) throw new Error('Unlock this scene before editing.');
     return {
-      ...prev, title: s.title, prompt: s.prompt, seconds: s.seconds, roleIds: s.roleIds, locked: s.locked,
+      ...prev, title: s.title, prompt: s.prompt, seconds: s.seconds, roleIds: s.roleIds, locked: s.locked, purpose: s.purpose, productAction: s.productAction,
       version: substantive ? prev.version + 1 : prev.version,
-      history: substantive ? [...prev.history, { version: prev.version, prompt: prev.prompt, seconds: prev.seconds, at: now }].slice(-200) : prev.history,
+      history: substantive ? [...prev.history, historyEntry(prev, now)].slice(-200) : prev.history,
     };
   });
   // Removing a locked scene is not allowed.

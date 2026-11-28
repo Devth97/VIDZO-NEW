@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { FileJson, ImageOff } from 'lucide-react';
+import Link from 'next/link';
+import { AlertTriangle, CheckCircle2, FileJson, ImageOff, Loader } from 'lucide-react';
 import type { Asset, JobView, Project, Quote, QuoteScope } from '@/lib/domain/schema';
 import { useWorkspace } from '../workspace-provider';
 
@@ -62,16 +63,35 @@ export function PrivateMedia({ asset, alt, className }: { asset?: Asset; alt: st
   return <div className={'media-frame ' + (className ?? '')}>{label}{/* eslint-disable-next-line @next/next/no-img-element */}<img src={src} alt={alt}/></div>;
 }
 
-export function JobStatus({ job, onRetry }: { job?: JobView; onRetry?: (id: string) => void }) {
+const taskStatusText: Record<string, string> = { queued: 'Waiting', submitted: 'Submitted', running: 'In production', succeeded: 'Delivered', failed: 'Failed · credits released', unknown: 'Checking with provider', canceled: 'Canceled' };
+
+/** Actual persisted job stages, with what the state means for credits and what the user can do next. */
+export function JobStatus({ job, project, onRetry }: { job?: JobView; project?: Project; onRetry?: (id: string) => void }) {
   if (!job) return null;
   const failed = job.tasks.filter(t => t.status === 'failed').length;
-  return <div className={'job-panel ' + (job.status === 'failed' ? 'is-failed' : '')} role="status" aria-live="polite">
-    <div><strong>{active(job.status) ? job.stage : job.status === 'failed' ? 'This job did not complete' : job.stage}</strong>
-      <span className="small-text muted">{job.creditsReserved ? `${job.creditsReserved} credits ${active(job.status) ? 'held' : `· ${job.creditsSettled} settled, ${job.creditsReserved - job.creditsSettled} released`}` : 'No credits involved'}</span></div>
-    <ol className="job-tasks">{job.tasks.map(t => <li key={t.taskId} className={'task-' + t.status}><span>{t.kind}</span><span>{t.status === 'unknown' ? 'checking with provider' : t.status}</span></li>)}</ol>
+  const unknown = job.tasks.some(t => t.status === 'unknown');
+  const isActive = active(job.status);
+  const released = job.creditsReserved - job.creditsSettled;
+  const name = (t: JobView['tasks'][number]) => {
+    const i = project?.scenes.findIndex(s => s.id === t.sceneId) ?? -1;
+    return i >= 0 ? `Scene ${i + 1} · ${project!.scenes[i].title || t.kind}` : t.kind;
+  };
+  const Icon = job.status === 'failed' ? AlertTriangle : isActive ? Loader : CheckCircle2;
+  return <div className={'job-panel ' + (job.status === 'failed' ? 'is-failed' : job.status === 'review' ? 'is-review' : '')} role="status" aria-live="polite">
+    <div><strong><Icon size={16} aria-hidden="true" className={isActive ? 'spin-slow' : undefined}/>{job.status === 'failed' ? 'This job did not complete' : job.stage}</strong>
+      <span className="small-text muted">{job.creditsReserved ? (isActive ? `${job.creditsReserved} credits held` : `${job.creditsSettled} settled · ${released} released`) : 'No credits involved'}</span></div>
+    <ol className="job-tasks">{job.tasks.map(t => <li key={t.taskId} className={'task-' + t.status}><span>{name(t)}</span><span>{taskStatusText[t.status] ?? t.status}</span></li>)}</ol>
     {job.error && <p className="small-text">{job.error}</p>}
-    {active(job.status) && <p className="small-text muted">You can leave this page; work continues and is saved.</p>}
-    {!active(job.status) && failed > 0 && onRetry && job.kind !== 'analysis' && <button className="button secondary" onClick={() => onRetry(job.id)}>Quote a retry for the missing work</button>}
+    {isActive && <p className="small-text muted">{job.status === 'queued' ? 'Waiting for a production slot. ' : ''}You can leave this page: progress is saved and the held credits are settled only for delivered items.</p>}
+    {unknown && <p className="small-text muted">The provider has not confirmed one item yet. It will be checked, never sent twice, and its credits stay held until it is resolved.</p>}
+    {job.status === 'review' && <p className="small-text muted">{job.kind === 'export' ? 'A VIDZO reviewer checks product, likeness, claims and CTA before download.' : 'Review the new work below. Approve it, or report a quality concern before paying for a redraw.'}</p>}
+    {!isActive && failed > 0 && <>
+      <p className="small-text">Technical failure, not a creative redraw: the {failed} undelivered item{failed === 1 ? '' : 's'} cost nothing{released ? ` and ${released} credits were released` : ''}.</p>
+      <div className="inline-actions">
+        {onRetry && job.kind !== 'analysis' && <button className="button secondary" onClick={() => onRetry(job.id)}>Quote a retry for the missing work</button>}
+        <Link className="text-button" href="/support">Contact support</Link>
+      </div>
+    </>}
   </div>;
 }
 

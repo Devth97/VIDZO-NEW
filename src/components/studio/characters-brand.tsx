@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Users, Check, ImagePlus, FileImage, ShieldCheck, History } from 'lucide-react';
 import { useWorkspace } from '../workspace-provider';
 import { ErrorMessage } from '../ui';
-import { currentSheet, logoAsset, productAssets, referenceLimits, selectCandidate, sheetHistory } from '@/lib/domain/project';
+import { currentSheet, fidelityLabels, logoAsset, productAssets, referenceLimits, selectCandidate, sheetHistory } from '@/lib/domain/project';
 import type { Brief } from '@/lib/domain/schema';
 import { PrivateMedia, type StepProps } from './shared';
 
@@ -41,6 +41,8 @@ export function CharactersStep({ project: p, actions }: StepProps) {
   </div>;
 }
 
+const fidelityHints = { shape: 'e.g. Tall cylinder, rounded shoulders, 30 ml', colour: 'e.g. Frosted amber glass, matte black cap', packaging: 'e.g. Front label text reads exactly as in the photos', prohibited: 'e.g. Never add a dropper, extra text or a second product' } as const;
+
 export function BrandStep({ project: p, actions }: StepProps) {
   const { demo } = useWorkspace();
   const [error, setError] = useState(''), [uploading, setUploading] = useState<string | null>(null);
@@ -70,6 +72,9 @@ export function BrandStep({ project: p, actions }: StepProps) {
       {rejected.length > 0 && <p className="small-text muted">{rejected.length} file{rejected.length > 1 ? 's were' : ' was'} rejected during verification and will not be used.</p>}
       {!p.sample && (!products.length || !logo) && <p className="notice warning">Add at least one product photo and your logo before the storyboard.</p>}
       <div className="field-grid" style={{ marginTop: 24 }}><div className="field"><label htmlFor="brand-color">Brand colour</label><input id="brand-color" type="color" value={p.brief.color} onChange={e => field('color', e.target.value)}/></div><div className="field"><label htmlFor="brand-font">Optional font preference</label><input id="brand-font" value={p.brief.font} maxLength={100} placeholder="e.g. Inter" onChange={e => field('font', e.target.value)}/></div></div>
+    </section>
+    <section className="panel" style={{ marginTop: 24 }} aria-labelledby="fidelity-title"><h3 id="fidelity-title">What must stay exact</h3><p className="muted small-text" style={{ margin: '8px 0 24px' }}>Sent with every frame and clip request, and listed beside each frame when you approve it. Models cannot guarantee a perfect match, so these notes are your review checklist too.</p>
+      {(Object.keys(fidelityLabels) as (keyof typeof fidelityLabels)[]).map(k => <div className="field" key={k}><label htmlFor={'fidelity-' + k}>{fidelityLabels[k]} (optional)</label><textarea id={'fidelity-' + k} rows={2} value={p.brief.fidelity?.[k] ?? ''} maxLength={k === 'prohibited' ? 1000 : 500} placeholder={fidelityHints[k]} onChange={e => actions.change({ ...p, brief: { ...p.brief, fidelity: { ...p.brief.fidelity, [k]: e.target.value } } })}/></div>)}
     </section>
     <section className="panel" style={{ marginTop: 24 }}><h3>The creative brief</h3><p className="muted small-text" style={{ margin: '8px 0 24px' }}>A few considered details make a more distinctive ad. Visual details (product, tone, colour, differences) affect frames; text overlays (CTA, offer, claims, font) affect only the final assembly.</p>
       <div className="field-grid"><div className="field"><label htmlFor="objective">Objective</label><select id="objective" value={p.brief.objective} onChange={e => field('objective', e.target.value)}>{['Product launch', 'Brand awareness', 'Offer promotion', 'Product education'].map(v => <option key={v}>{v}</option>)}</select></div><div className="field"><label htmlFor="language">Language</label><select id="language" value={p.brief.language} onChange={e => field('language', e.target.value)}>{['English', 'Hindi', 'Tamil', 'Kannada', 'Telugu', 'Malayalam'].map(v => <option key={v}>{v}</option>)}</select></div></div>

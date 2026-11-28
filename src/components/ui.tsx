@@ -6,7 +6,7 @@ export function Modal({ open, close, title, children }: { open: boolean; close: 
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const d = ref.current; if (!d) return;
-    if (open && !d.open) { d.showModal(); d.querySelector<HTMLElement>('[data-autofocus], input:not([type=hidden]), textarea, select')?.focus(); }
+    if (open && !d.open) { d.showModal(); d.querySelector<HTMLElement>('[data-autofocus], input:not([type=hidden]), textarea, select')?.focus({ preventScroll: true }); }
     else if (!open && d.open) d.close();
   }, [open]);
   return <dialog ref={ref} className="modal" onCancel={close} onClose={close} aria-label={title}>
