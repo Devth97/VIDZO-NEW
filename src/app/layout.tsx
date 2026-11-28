@@ -19,6 +19,7 @@ import './reference-workflow.css';
 import './dino-timeline.css';
 import './public-polish.css';
 import './creative-motion.css';
+import './hero-campaign.css';
 import { DesignSystem } from '@/components/design-system';
 
 export const metadata: Metadata = { title: { default: 'VIDZO — Original product ads, directed by you', template: '%s · VIDZO' }, description: 'Plan a distinct product ad from an authorized reference. Your product, your creative direction, clear approvals and upfront credit quotes.' };

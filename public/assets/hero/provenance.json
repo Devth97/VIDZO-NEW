@@ -1,0 +1,44 @@
+{
+  "created": "2026-11-28",
+  "method": "Built-in imagegen; original fictional campaign artwork, not VIDZO-generated video results",
+  "references": "No competitor branding or assets copied. Second image uses the first generated bottle as continuity reference.",
+  "masters": "Retained in Codex generated_images outside Git; deployment contains optimized WebP derivatives.",
+  "assets": [
+    {
+      "name": "citrus-studio",
+      "files": [
+        "citrus-studio-240.webp",
+        "citrus-studio-480.webp"
+      ],
+      "dimensions": [
+        [
+          240,
+          360
+        ],
+        [
+          480,
+          720
+        ]
+      ],
+      "prompt": "Use case: ads-marketing. Asset type: original editorial campaign photograph for VIDZO landing-page hero, portrait 2:3 composition. Create a remarkably convincing high-end commercial photograph of a small unbranded amber glass citrus drink bottle with a matte deep olive screw cap, plain ivory paper label with absolutely no writing, and an orange liquid visible through amber glass. Bottle caught mid-air tilted about 15 degrees, with a single thin ribbon of real water curling behind it and a sliced blood orange low in frame. Bottle is the single unmistakable subject and fully visible with generous margin around cap and base. Hard late-afternoon sunlight from camera left, crisp asymmetric shadows on a warm pale apricot plaster backdrop, real water droplets and imperfect paper fibers. Art direction: contemporary independent beverage campaign, photographed on a medium-format camera with a fast strobe freezing the water. Tangible glass, physically plausible refraction, controlled highlights, restrained orange and dark olive palette. Compelling editorial composition with depth, no stock-photo beige plinth, no flowers, no fantasy, no haze, no neon, no artificial glow, no excessively polished CGI. No typography, lettering, logos, badges, interface, borders or watermark. This is an illustrative fictional product, not a real brand."
+    },
+    {
+      "name": "citrus-lifestyle",
+      "files": [
+        "citrus-lifestyle-240.webp",
+        "citrus-lifestyle-480.webp"
+      ],
+      "dimensions": [
+        [
+          240,
+          360
+        ],
+        [
+          480,
+          720
+        ]
+      ],
+      "prompt": "Use case: ads-marketing. Generate a second original editorial campaign photograph, portrait 2:3, using the previous generated bottle image only as a product continuity reference. Keep the exact squat amber glass bottle, deep olive ribbed screw cap, orange drink and unprinted ivory paper label. Entirely different composition: candid outdoor editorial photograph cropped from a real adult woman's shoulder to hip (face outside frame), wearing an oversized crisp ivory cotton shirt, sleeve casually rolled, her anatomically natural hand holding that exact bottle down by her side. Bottle fully visible, label front-facing, warm sun catching condensation. Background deep olive painted tennis-court fence softly out of focus, one warm orange court stripe in lower background. Afternoon hard natural light, believable skin creases, imperfect shirt texture and subtle analog grain. Shot on 85mm lens, unforced magazine campaign feel with rich olive shadows and luminous orange glass. No floating objects, no water ribbons in this second image, no text, letters, logos, badges, interface, watermark, CGI/plastic skin or stock-photo poses. Keep her hand realistic with five fingers and a physically plausible grip. The image should feel observed, energetic and photographic, not a staged beige beauty ad."
+    }
+  ]
+}

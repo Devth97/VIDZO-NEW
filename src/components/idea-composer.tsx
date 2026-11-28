@@ -40,7 +40,7 @@ export function IdeaComposer() {
         <div className="idea-tools"><button type="button" className="idea-product" aria-label="Add product details" aria-expanded={details} aria-controls={id + '-details'} onClick={() => setDetails(!details)}><Plus size={16}/>Product</button>
           <div className="idea-goal"><label className="sr-only" htmlFor={id + '-goal'}>Ad goal</label><select id={id + '-goal'} name="objective" value={objective} onChange={e => setObjective(e.target.value as Objective)}>{objectives.map((o,index) => <option key={o} value={o}>{['Launch','Awareness','Offer','Explain'][index]}</option>)}</select><ChevronDown size={13} aria-hidden="true"/></div>
         </div>
-        <button className="idea-submit shimmer" type="submit" disabled={busy}>{busy ? 'Opening…' : 'Continue'}<ArrowUpRight size={18}/></button>
+        <button className="idea-submit shimmer" type="submit" disabled={busy}>{busy ? 'Opening…' : 'Start my free draft'}<ArrowUpRight size={18}/></button>
       </div>
       <ErrorMessage message={error}/>
     </form>

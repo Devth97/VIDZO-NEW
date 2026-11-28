@@ -1,0 +1,31 @@
+/* Two editorial stills support the composer; the reference video fan stays intact. */
+.hero-artwork { display: flex; align-items: center; justify-content: center; gap: 8px; margin: -4px auto 22px; max-inline-size: 380px; text-align: start; }
+.hero-art { margin: 0; flex: 0 0 72px; min-inline-size: 0; }
+.hero-art img { display: block; inline-size: 100%; block-size: auto; aspect-ratio: 2 / 3; border-radius: 10px; object-fit: cover; border: 3px solid #fffefa; box-shadow: 0 8px 20px #39422a18; }
+.hero-art-studio { transform: rotate(-7deg); }
+.hero-art-lifestyle { transform: rotate(6deg) translateY(4px); }
+.hero-art figcaption { display: none; }
+.hero-art-note { margin: 0 0 0 12px; font-size: .75rem; line-height: 1.5; color: #48583d; }
+.hero-art-note strong { font-weight: 600; }
+.hero-art-note small { display: block; margin-block-start: 6px; font-size: .625rem; color: #626659; }
+.public-frame .entry-heading > p:last-child { max-inline-size: 660px; margin-inline: auto; }
+@media (min-width: 1200px) {
+  .hero-artwork { position: absolute; inset: 158px calc(50% - min(46vw, 700px)) auto; max-inline-size: none; block-size: 400px; margin: 0; pointer-events: none; display: block; z-index: 1; }
+  .hero-art { position: absolute; inline-size: clamp(140px, 12.5vw, 185px); }
+  .hero-art-studio { inset: 0 auto auto 0; transform: rotate(-8deg); }
+  .hero-art-lifestyle { inset: 48px 0 auto auto; transform: rotate(8deg); }
+  .hero-art img { border-radius: 18px; border-width: 5px; }
+  .hero-art figcaption { display: block; padding: 12px 8px; font-size: .75rem; color: #4c5940; line-height: 1.55; }
+  .hero-art figcaption span { display: block; font-size: .5625rem; font-family: var(--mono); letter-spacing: .06em; margin-block-end: 4px; }
+  .hero-art-note { position: absolute; inset: auto 0 0 auto; margin: 0; inline-size: clamp(140px, 12.5vw, 185px); text-align: center; }
+  .hero-art-note > br, .hero-art-note > strong { display: none; }
+  .hero-art-note { font-size: 0; }
+  .hero-art-note small { font-size: .625rem; }
+  .public-frame .creative-entry { padding-block-start: 52px; }
+}
+@media (min-width: 1200px) and (prefers-reduced-motion: no-preference) {
+  .hero-art { transition: transform .5s; }
+  .creative-entry:has(.idea-composer:focus-within) .hero-art-studio { transform: rotate(-4deg) translateY(-6px); }
+  .creative-entry:has(.idea-composer:focus-within) .hero-art-lifestyle { transform: rotate(4deg) translateY(-6px); }
+}
+@media (max-width: 380px) { .hero-art { flex-basis: 64px; } .hero-art-note { margin-inline-start: 8px; font-size: .6875rem; } }
