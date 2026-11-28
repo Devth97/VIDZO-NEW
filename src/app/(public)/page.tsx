@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, Check } from 'lucide-react';
 import { StepTimeline } from '@/components/effects/step-timeline';
-import { StudioBoard } from '@/components/studio-board';
+import { ReferenceWorkflow } from '@/components/reference-workflow';
 import { FeatureTicker } from '@/components/feature-ticker';
 import { FormatLibrary } from '@/components/format-library';
 import { Reveal } from '@/components/magic/reveal';
@@ -31,7 +31,7 @@ export default function Home() {
     <section className="editorial-section why-section" id="why"><div className="playful-head"><p className="eyebrow">Why VIDZO</p><h2>Creative control,<br/><em>without the guesswork.</em></h2><p>Everything you approve, everything you spend and everything you change is visible before it happens.</p></div>
       <Reveal><WhyBento/></Reveal>
     </section>
-    <StudioBoard/>
+    <ReferenceWorkflow/>
     <section className="editorial-section playful-steps" id="how"><div className="playful-head"><p className="eyebrow">How the studio works</p><h2>Reference. Direction.<br/><em>Review.</em></h2><p>Keep the reference, product, brief and scene decisions together in one project. Nothing is generated until you approve a quote.</p></div>
       <Reveal><StepTimeline/></Reveal>
       <p className="playful-center"><Link className="button secondary" href="/projects?new=1">Start with a draft<ArrowRight size={16}/></Link></p>

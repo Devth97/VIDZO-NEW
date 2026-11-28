@@ -15,6 +15,7 @@ import './playful.css';
 import './magic.css';
 import './review.css';
 import './video-showcase.css';
+import './reference-workflow.css';
 import { DesignSystem } from '@/components/design-system';
 
 export const metadata: Metadata = { title: { default: 'VIDZO — Original product ads, directed by you', template: '%s · VIDZO' }, description: 'Plan a distinct product ad from an authorized reference. Your product, your creative direction, clear approvals and upfront credit quotes.' };
