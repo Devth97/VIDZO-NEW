@@ -28,6 +28,7 @@ export function IdeaComposer() {
   }
   return <div className="idea-composer-wrap">
     <form className="idea-composer" onSubmit={submit} aria-labelledby={id + '-label'} aria-busy={busy}>
+      <span className="border-beam" aria-hidden="true"/>
       <label id={id + '-label'} htmlFor={id + '-idea'}>Describe your ad</label>
       <textarea id={id + '-idea'} name="direction" ref={input} rows={3} maxLength={2000} value={idea} onChange={e => setIdea(e.target.value)} placeholder="What’s the idea? A product reveal, a different cast, a fresh take on a reference…" aria-describedby={id + '-help'}/>
       <div className="idea-details" id={id + '-details'} hidden={!details}>
@@ -38,7 +39,7 @@ export function IdeaComposer() {
         <div className="idea-tools"><button type="button" className="idea-product" aria-label="Add product details" aria-expanded={details} aria-controls={id + '-details'} onClick={() => setDetails(!details)}><Plus size={16}/>Product</button>
           <div className="idea-goal"><label className="sr-only" htmlFor={id + '-goal'}>Ad goal</label><select id={id + '-goal'} name="objective" value={objective} onChange={e => setObjective(e.target.value as Objective)}>{objectives.map((o,index) => <option key={o} value={o}>{['Launch','Awareness','Offer','Explain'][index]}</option>)}</select><ChevronDown size={13} aria-hidden="true"/></div>
         </div>
-        <button className="idea-submit" type="submit" disabled={busy}>{busy ? 'Opening…' : 'Continue'}<ArrowUpRight size={18}/></button>
+        <button className="idea-submit shimmer" type="submit" disabled={busy}>{busy ? 'Opening…' : 'Continue'}<ArrowUpRight size={18}/></button>
       </div>
       <ErrorMessage message={error}/>
     </form>

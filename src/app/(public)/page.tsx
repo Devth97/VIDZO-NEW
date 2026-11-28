@@ -4,6 +4,9 @@ import { StepTimeline } from '@/components/effects/step-timeline';
 import { StudioBoard } from '@/components/studio-board';
 import { FeatureTicker } from '@/components/feature-ticker';
 import { FormatLibrary } from '@/components/format-library';
+import { Reveal } from '@/components/magic/reveal';
+import { WhyBento } from '@/components/magic/why-bento';
+import { GridPattern } from '@/components/magic/grid-pattern';
 import { CreativeWorkspace } from '@/components/creative-workspace';
 import { placeholderPricing } from '@/lib/domain/pricing';
 import { rupees } from '@/lib/domain/schema';
@@ -23,15 +26,18 @@ export default function Home() {
     <CreativeWorkspace/>
     <FeatureTicker/>
     <section className="editorial-section formats-section" id="formats"><div className="playful-head"><p className="eyebrow">Ad formats</p><h2>Start from a structure<br/><em>that already works.</em></h2><p>Pick a format to fill in your brief with its scenes. Every line stays editable, and you bring the product, the reference and the direction.</p></div>
-      <FormatLibrary/>
+      <Reveal><FormatLibrary/></Reveal>
+    </section>
+    <section className="editorial-section why-section" id="why"><div className="playful-head"><p className="eyebrow">Why VIDZO</p><h2>Creative control,<br/><em>without the guesswork.</em></h2><p>Everything you approve, everything you spend and everything you change is visible before it happens.</p></div>
+      <Reveal><WhyBento/></Reveal>
     </section>
     <StudioBoard/>
     <section className="editorial-section playful-steps" id="how"><div className="playful-head"><p className="eyebrow">How the studio works</p><h2>Reference. Direction.<br/><em>Review.</em></h2><p>Keep the reference, product, brief and scene decisions together in one project. Nothing is generated until you approve a quote.</p></div>
-      <StepTimeline/>
+      <Reveal><StepTimeline/></Reveal>
       <p className="playful-center"><Link className="button secondary" href="/projects?new=1">Start with a draft<ArrowRight size={16}/></Link></p>
     </section>
     <section className="editorial-section price-preview"><div><p className="eyebrow">Good creative, clear costs</p><h2>Know the next step.<br/><em>And what it costs.</em></h2><p>Create your draft first. Generation starts with your approval of a quote, including the model, resolution and maximum credits.</p><Link className="editorial-link" href="/pricing">Understand the credits<ArrowUpRight size={17}/></Link></div><div className="price-preview-card"><span className="eyebrow">Illustrative starter pack</span><p className="preview-price">{rupees(pack.paise / 100)}<span>/ {pack.credits} credits</span></p><hr/><p><Check size={15}/>Prepaid credits, no compulsory subscription</p><p><Check size={15}/>Technical failures release unsettled credits</p><p className="small-text muted">Pilot pricing under validation. Purchases and generation open when live services are ready.</p><Link className="button secondary full" href="/pricing">See pricing details<ArrowRight size={16}/></Link></div></section>
     <section className="editorial-section editorial-faq" id="faq"><div><p className="eyebrow">Before your first draft</p><h2>A few good<br/><em>questions.</em></h2></div><div className="faq">{faqs.map(([q,a]) => <details key={q}><summary>{q}<span aria-hidden="true">+</span></summary><p>{a}</p></details>)}</div></section>
-    <section className="editorial-final"><div><p className="eyebrow">Private beta</p><h2>Ready to make it <em>yours?</em></h2><p>Free to draft · No card needed · Quote before generation</p></div><Link className="button primary" href="#new-draft">Create your draft<ArrowRight size={18}/></Link></section>
+    <section className="editorial-final"><GridPattern/><div><p className="eyebrow">Private beta</p><h2>Ready to make it <em>yours?</em></h2><p>Free to draft · No card needed · Quote before generation</p></div><Link className="button primary shimmer" href="#new-draft">Create your draft<ArrowRight size={18}/></Link></section>
   </div>;
 }

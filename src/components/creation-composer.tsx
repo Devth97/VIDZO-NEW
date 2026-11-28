@@ -58,7 +58,7 @@ export function CreationComposer({ variant, initial, onCreate, autoFocus }: Prop
   }
 
   return <div className={'composer-wrap composer-wrap-' + variant}><form className={'composer composer-' + variant} onSubmit={submit} aria-labelledby={id + '-title'}>
-    <div className="composer-head"><span id={id + '-title'}><Film size={14}/>New ad draft</span><span className="composer-format">9:16 · 10–15 seconds</span></div>
+    <span className="border-beam" aria-hidden="true"/><div className="composer-head"><span id={id + '-title'}><Film size={14}/>New ad draft</span><span className="composer-format">9:16 · 10–15 seconds</span></div>
     <label className="sr-only" htmlFor={id + '-name'}>Project name</label>
     <textarea ref={nameRef} id={id + '-name'} className="composer-input" rows={2} maxLength={100} value={name} onChange={e => setName(e.target.value)}
       onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }}
@@ -81,7 +81,7 @@ export function CreationComposer({ variant, initial, onCreate, autoFocus }: Prop
       <ol className="composer-next" id={id + '-help'} aria-label="What happens next in your private studio">
         <li><UploadCloud size={14}/>Reference video</li><li><ImagePlus size={14}/>Product photos</li><li><ListChecks size={14}/>Approve, then quote</li>
       </ol>
-      <button type="submit" className="button primary composer-submit" disabled={busy}>{busy ? (variant === 'workspace' ? 'Creating draft…' : 'Opening studio…') : variant === 'workspace' ? 'Create draft' : 'Start a free draft'}<ArrowRight size={16}/></button>
+      <button type="submit" className="button primary composer-submit shimmer" disabled={busy}>{busy ? (variant === 'workspace' ? 'Creating draft…' : 'Opening studio…') : variant === 'workspace' ? 'Create draft' : 'Start a free draft'}<ArrowRight size={16}/></button>
     </div>
   </form>
   <div className="quick-starts" role="group" aria-label="Quick starts: fill in a name and goal">

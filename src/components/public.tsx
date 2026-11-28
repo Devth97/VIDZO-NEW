@@ -32,7 +32,7 @@ export function PublicFrame({ children }: { children: ReactNode }) {
       <nav id="public-nav" aria-label="Main" className={open ? 'is-open' : ''} onClick={event => { if ((event.target as HTMLElement).closest('a')) setOpen(false); }}>
         <Link href="/#how">The process</Link><Link href="/showcase" aria-current={pathname === '/showcase' ? 'page' : undefined}>Starting points</Link><Link href="/pricing" aria-current={pathname === '/pricing' ? 'page' : undefined}>Pricing</Link>
         {!inStudio && <Link href="/signin">Sign in</Link>}
-        <Link className="button primary" href={inStudio ? '/projects' : '/projects?new=1'}>{inStudio ? 'Open your studio' : 'Start a free draft'}<ArrowUpRight size={16}/></Link>
+        <Link className="button primary shimmer" href={inStudio ? '/projects' : '/projects?new=1'}>{inStudio ? 'Open your studio' : 'Start a free draft'}<ArrowUpRight size={16}/></Link>
       </nav>
     </header></div>
     <main id="content" tabIndex={-1}>{children}</main>

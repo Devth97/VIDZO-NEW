@@ -1,6 +1,7 @@
 'use client';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { AnimatePresence, motion, MotionConfig } from 'motion/react';
 import { ChevronLeft, Check, ShieldCheck, CloudOff, AlertTriangle, RotateCcw } from 'lucide-react';
 import { useWorkspace } from '@/components/workspace-provider';
 import { ErrorMessage, Loading, Modal } from '@/components/ui';
@@ -112,13 +113,15 @@ export default function StudioPage({ params }: { params: Promise<{ id: string }>
     })}</ol></nav>
     <div className={'studio-intro step-tone-' + project.step}><div><h2>{intro[project.step][0]}</h2><p>{intro[project.step][1]}</p></div><span className="badge">Step {project.step + 1} of 7</span></div>
     <ErrorMessage message={error}/>
-    {project.step === 0 && <ReferenceStep {...props}/>}
-    {project.step === 1 && <AnalysisStep {...props}/>}
-    {project.step === 2 && <CharactersStep {...props}/>}
-    {project.step === 3 && <BrandStep {...props}/>}
-    {project.step === 4 && <StoryboardStep {...props}/>}
-    {project.step === 5 && <GenerateStep {...props} tier={tier} setTier={setTier}/>}
-    {project.step === 6 && <ExportStep {...props} onSimulateReview={ctx.demo ? () => void guarded(async () => { adopt(await (ctx.backend as ReturnType<typeof createDemoBackend>).reviewExport(project.id)); }) : undefined}/>}
+    <MotionConfig reducedMotion="user"><AnimatePresence mode="wait" initial={false}><motion.div key={project.step} initial={{ opacity: 0, y: 12, filter: 'blur(6px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -8 }} transition={{ duration: .28, ease: [0.22, 1, 0.36, 1] }}>
+      {project.step === 0 && <ReferenceStep {...props}/>}
+      {project.step === 1 && <AnalysisStep {...props}/>}
+      {project.step === 2 && <CharactersStep {...props}/>}
+      {project.step === 3 && <BrandStep {...props}/>}
+      {project.step === 4 && <StoryboardStep {...props}/>}
+      {project.step === 5 && <GenerateStep {...props} tier={tier} setTier={setTier}/>}
+      {project.step === 6 && <ExportStep {...props} onSimulateReview={ctx.demo ? () => void guarded(async () => { adopt(await (ctx.backend as ReturnType<typeof createDemoBackend>).reviewExport(project.id)); }) : undefined}/>}
+    </motion.div></AnimatePresence></MotionConfig>
     <div className="studio-bottom">
       <button className="button secondary" disabled={project.step === 0 || busy} onClick={() => void go(project.step - 1)}>Previous</button>
       {nextBlocker && <span className="small-text muted next-hint">{nextBlocker}</span>}

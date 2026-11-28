@@ -1,0 +1,45 @@
+/* Animated component layer (patterns from Magic UI, Aceternity and 21st.dev, rebuilt in our palette). */
+
+/* Border beam: a lime light that travels around a card's edge. */
+@property --beam-angle{syntax:'<angle>';inherits:false;initial-value:0deg}
+.border-beam{position:absolute;inset:-1.5px;border-radius:inherit;padding:1.5px;pointer-events:none;
+  background:conic-gradient(from var(--beam-angle),transparent 0 78%,#d8fb64 86%,#4f6b22 92%,transparent 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
+  animation:beam-spin 6s linear infinite}
+@keyframes beam-spin{to{--beam-angle:360deg}}
+.idea-composer,.composer{position:relative}
+
+/* Shimmer: a soft sheen that sweeps across primary actions. */
+.shimmer{position:relative;overflow:hidden;isolation:isolate}
+.shimmer::after{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(110deg,transparent 30%,#ffffffb3 46%,transparent 62%);transform:translateX(-120%);animation:shimmer-sweep 3.6s ease-in-out infinite}
+@keyframes shimmer-sweep{0%,55%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+
+@layer components{
+/* Spotlight cards and the bento grid */
+.bento{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.bento-wide{grid-column:span 2}
+.spotlight-card{position:relative;display:flex;flex-direction:column;gap:12px;padding:24px;border:1px solid var(--border);border-radius:22px;background:var(--surface);overflow:hidden;transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease}
+.spotlight-card::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .25s ease;background:radial-gradient(320px circle at var(--mx,50%) var(--my,50%),#d8fb6455,transparent 60%)}
+.spotlight-card:hover{border-color:var(--ink);box-shadow:4px 5px 0 #e4dcc4;transform:translateY(-2px)}
+.spotlight-card:hover::before{opacity:1}
+.spotlight-card>*{position:relative}
+.spotlight-card h3{margin:8px 0 0;font-size:1.25rem;font-weight:600;letter-spacing:-.03em}
+.spotlight-card p{margin:0;font-size:.875rem;line-height:1.7;color:var(--muted)}
+
+}
+/* Animated grid pattern */
+.grid-pattern{position:absolute;inset:0;inline-size:100%;block-size:100%;color:#a99c6433;pointer-events:none;-webkit-mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%);mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%)}
+.grid-cell{fill:#d8fb64;opacity:0;animation:grid-glow 2.4s ease-in-out infinite}
+@keyframes grid-glow{0%,100%{opacity:0}50%{opacity:.7}}
+.editorial-final{position:relative;overflow:hidden;background-image:none}
+.editorial-final>*:not(.grid-pattern){position:relative}
+
+/* Format tabs with a sliding pill */
+.format-tabs{display:flex;flex-wrap:wrap;gap:4px;inline-size:fit-content;margin-block-end:24px;padding:4px;border:1px solid var(--border);border-radius:999px;background:var(--surface)}
+.format-tabs button{position:relative;min-block-size:40px;padding:8px 16px;border:0;border-radius:999px;background:transparent;font-size:.8125rem;font-weight:500;color:var(--muted);cursor:pointer}
+.format-tabs button[aria-pressed=true]{color:var(--ink)}
+.format-tab-pill{position:absolute;inset:0;border-radius:999px;background:var(--lime);border:1.5px solid var(--ink)}
+
+@media(max-width:900px){.bento{grid-template-columns:1fr 1fr}.bento-wide{grid-column:1/-1}}
+@media(max-width:600px){.bento{grid-template-columns:1fr}.format-tabs{inline-size:auto}}
+@media(prefers-reduced-motion:reduce){.border-beam,.shimmer::after,.grid-cell{animation:none}.border-beam{display:none}.spotlight-card{transition:none}.spotlight-card:hover{transform:none}}
