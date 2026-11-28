@@ -2,9 +2,10 @@
 
 import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowUpRight, Check, Clapperboard, Download, Film, Link2, Pencil, Play } from 'lucide-react';
+import { ArrowUpRight, Check, Clapperboard, Download, Film, Link2, Pencil, Expand } from 'lucide-react';
 import { saveDraftIntent } from '@/lib/draft-intent';
 import { Modal } from './ui';
+import { SilentVideo } from './silent-video';
 
 const examples = [
   { id: 'cat-bed', product: 'Cat bed', direction: 'Before → after', time: 'Tuesday · 7:00 PM' },
@@ -54,14 +55,14 @@ export function ReferenceWorkflow() {
           <div className="workflow-demo-approval"><div className="workflow-demo-panel-heading"><h3>Ready to make it your own?</h3><span>Draft first</span></div><ul aria-label="Example brief settings"><li>3 concepts</li><li>9:16</li><li>15s target</li><li>Quote before generation</li></ul><div className="workflow-demo-actions"><button className="button ink" onClick={openDraft} disabled={!brief.trim() || opening}>{opening ? 'Opening…' : 'Open this brief'}<ArrowUpRight size={15} aria-hidden="true" /></button><button className="workflow-demo-edit" onClick={() => setEditing(!editing)} aria-expanded={editing}><Pencil size={14} aria-hidden="true" />{editing ? 'Done editing' : 'Edit brief'}</button></div><small>Creates a draft. Paid generation requires a separate quote and approval.</small></div>
         </div>
         <div className="workflow-demo-results">
-          <div className="workflow-demo-results-heading"><span><Film size={15} aria-hidden="true" />Three reference directions</span><small>Play to explore</small></div>
-          <div className="workflow-demo-videos">{examples.map(example => <figure key={example.id}><button className="workflow-demo-video-button" onClick={() => setSelected(example)} aria-label={`Watch ${example.product} reference`}><img src={`/media/references/${example.id}.jpg`} width={360} height={640} loading="lazy" alt="" /><span><Play size={20} aria-hidden="true" /></span></button><figcaption><strong>{example.product}</strong><span>{example.direction}</span></figcaption></figure>)}</div>
+          <div className="workflow-demo-results-heading"><span><Film size={15} aria-hidden="true" />Three reference directions</span><small>Silent autoplay</small></div>
+          <div className="workflow-demo-videos">{examples.map(example => <figure key={example.id}><button className="workflow-demo-video-button" onClick={() => setSelected(example)} aria-label={`Watch ${example.product} reference`}><SilentVideo id={example.id} suspended={selected !== null} /><span><Expand size={15} aria-hidden="true" /></span></button><figcaption><strong>{example.product}</strong><span>{example.direction}</span></figcaption></figure>)}</div>
           <p className="workflow-demo-disclosure">Supplied clips · Silent references · Not VIDZO-generated results</p>
           <div className="workflow-demo-plan"><div className="workflow-demo-panel-heading"><h3>Plan the next step</h3><span>Example schedule</span></div><dl>{examples.map(example => <div key={example.id}><dt>{example.product}</dt><dd>{example.time}</dd></div>)}</dl><button className="workflow-demo-download" onClick={downloadPlan}><Download size={15} aria-hidden="true" />Download example plan</button><small>Planning preview. Social publishing is not connected.</small></div>
         </div>
       </div>
       <p className="workflow-demo-status" role="status">{status}</p>
     </div>
-    <Modal open={selected !== null} close={() => setSelected(null)} title={selected ? `${selected.product} reference` : 'Video reference'}>{selected && <div className="video-showcase-player"><video key={selected.id} src={`/media/references/${selected.id}.mp4`} poster={`/media/references/${selected.id}.jpg`} controls autoPlay playsInline muted width={360} height={640} aria-label={`${selected.product} supplied reference`} /><p>{selected.direction}</p><small>Supplied reference · Silent preview · Not a VIDZO output</small></div>}</Modal>
+    <Modal open={selected !== null} close={() => setSelected(null)} title={selected ? `${selected.product} reference` : 'Video reference'}>{selected && <div className="video-showcase-player"><SilentVideo key={selected.id} id={selected.id} label={`${selected.product} supplied reference`} /><p>{selected.direction}</p><small>Supplied reference · Silent preview · Not a VIDZO output</small></div>}</Modal>
   </section>;
 }

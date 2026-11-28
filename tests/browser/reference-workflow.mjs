@@ -3,7 +3,7 @@ import { chromium } from '@playwright/test';
 
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 try {
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, reducedMotion: 'reduce' });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(process.env.VIDZO_TEST_URL ?? 'http://127.0.0.1:3012/#reference-workflow');
@@ -11,13 +11,17 @@ try {
   await page.waitForFunction(() => getComputedStyle(document.querySelector('.workflow-demo-columns')).display === 'grid');
   await section.scrollIntoViewIfNeeded();
   assert.equal(await section.locator('.workflow-demo-video-button').count(), 3);
+  await page.waitForFunction(() => [...document.querySelectorAll('.workflow-demo-videos video')].every(video => !video.paused && video.readyState >= 2));
+  assert.equal(await section.locator('video').evaluateAll(videos => videos.every(video => video.muted && video.loop && video.autoplay && video.playsInline && !video.controls)), true);
+  assert.equal(await section.getByRole('button', { name: /pause|play/i }).count(), 0);
   assert.equal(await section.locator('.workflow-demo-columns').evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length), 2);
   for (const name of ['Cat bed', 'Plaid bag', 'Headphones']) {
     const button = section.getByRole('button', { name: `Watch ${name} reference` });
     await button.click();
     const dialog = page.getByRole('dialog', { name: `${name} reference` });
     await dialog.waitFor({ state: 'visible' });
-    await dialog.locator('video').evaluate(video => video.play());
+    await page.waitForFunction(() => { const video = document.querySelector('dialog[open] video'); return video && !video.paused && video.readyState >= 2; });
+    assert.equal(await dialog.locator('video').evaluate(video => video.muted && video.loop && !video.controls), true);
     assert.equal(await dialog.locator('video').evaluate(video => video.readyState >= 2 && !video.paused), true);
     await page.keyboard.press('Escape');
     await dialog.waitFor({ state: 'hidden' });
@@ -41,6 +45,7 @@ try {
   assert.equal(await section.locator('.workflow-demo-columns').evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length), 1);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   await section.locator('.workflow-demo-videos').scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => [...document.querySelectorAll('.workflow-demo-videos video')].every(video => !video.paused && video.readyState >= 2));
   await page.screenshot({ path: 'output/reference-workflow-mobile-final.png' });
   await page.setViewportSize({ width: 1440, height: 1100 });
   await section.locator('.workflow-demo').scrollIntoViewIfNeeded();

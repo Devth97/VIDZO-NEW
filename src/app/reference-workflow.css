@@ -44,8 +44,8 @@
 .workflow-demo-videos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .workflow-demo-videos figure { margin: 0; min-width: 0; }
 .workflow-demo-video-button { position: relative; display: block; width: 100%; padding: 0; border: 1px solid #dfd9c9; border-radius: 14px; background: #ddd7c9; overflow: clip; cursor: pointer; }
-.workflow-demo-video-button img { display: block; width: 100%; height: auto; aspect-ratio: 9 / 16; object-fit: cover; }
-.workflow-demo-video-button > span { position: absolute; display: grid; place-items: center; inset: 50% auto auto 50%; transform: translate(-50%, -50%); width: 44px; height: 44px; border: 1px solid #ffffff80; border-radius: 50%; color: #fff; background: #282b2580; transition: background-color .15s; }
+.workflow-demo-video-button video { display: block; width: 100%; height: auto; aspect-ratio: 9 / 16; object-fit: cover; pointer-events: none; }
+.workflow-demo-video-button > span { position: absolute; display: grid; place-items: center; inset: 10px 10px auto auto; width: 28px; height: 28px; border: 1px solid #ffffff80; border-radius: 50%; color: #fff; background: #282b2580; transition: background-color .15s; }
 .workflow-demo-video-button:hover > span { background: #282b25d0; }
 .workflow-demo-videos figcaption { padding-top: 10px; }
 .workflow-demo-videos strong { display: block; font-size: 12px; font-weight: 550; }
