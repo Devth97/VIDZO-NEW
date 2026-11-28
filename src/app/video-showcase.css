@@ -1,7 +1,7 @@
-.video-showcase { margin: 38px calc(50% - 50vw) 0; color: var(--ink, #28281f); }
-.video-showcase-fan { overflow: hidden; padding: 26px 0 104px; }
-.video-showcase-track { display: flex; justify-content: center; gap: clamp(9px, 1.1vw, 18px); list-style: none; padding: 0 28px; margin: 0; }
-.video-showcase-track > li { flex: 0 0 clamp(90px, 12vw, 210px); transform: translateY(calc(var(--fan-drop) * 7px)) rotate(calc(var(--fan-offset) * 2.5deg)); }
+.video-showcase { position: relative; left: 50%; transform: translateX(-50%); inline-size: min(1380px, calc(100dvw - 32px)); margin: 38px 0 0; color: var(--ink, #28281f); }
+.video-showcase-fan { padding: 26px 0 104px; }
+.video-showcase-track { display: flex; justify-content: center; gap: clamp(9px, 1%, 16px); list-style: none; padding: 0 3%; margin: 0; }
+.video-showcase-track > li { flex: 0 1 190px; min-inline-size: 0; transform: translateY(calc(var(--fan-drop) * 7px)) rotate(calc(var(--fan-offset) * 2.5deg)); }
 .video-showcase-card { display: block; position: relative; width: 100%; aspect-ratio: 9 / 16; overflow: hidden; padding: 0; border: 1px solid rgb(42 40 28 / 12%); border-radius: 18px; background: #ddd8ca; cursor: pointer; box-shadow: 0 16px 25px -18px rgb(45 40 25 / 42%); text-align: left; transition: transform 220ms ease, box-shadow 220ms ease; }
 .video-showcase-card:hover { transform: translateY(-9px); box-shadow: 0 24px 30px -18px rgb(45 40 25 / 50%); }
 .video-showcase-card:focus-visible { outline: 3px solid #5a633e; outline-offset: 5px; }
@@ -20,12 +20,11 @@
 .video-showcase-player video { display: block; max-height: 65dvh; max-width: 100%; width: auto; height: auto; margin: 0 auto 16px; border-radius: 12px; background: #171713; }
 .video-showcase-player p { max-width: 430px; margin: 10px auto; line-height: 1.6; font-size: 14px; }
 .video-showcase-player small { font-size: 11px; color: #696657; }
-@media (min-width: 1600px) { .video-showcase-track > li { flex-basis: 210px; } }
 @media (max-width: 760px) {
   .video-showcase { margin-top: 26px; }
   .video-showcase-fan { padding: 12px 0 24px; overflow-x: auto; scroll-snap-type: x mandatory; }
   .video-showcase-track { justify-content: flex-start; gap: 12px; width: max-content; padding: 0 24px 12px; }
-  .video-showcase-track > li { flex-basis: 180px; transform: none; scroll-snap-align: center; }
+  .video-showcase-track > li { flex: 0 0 180px; transform: none; scroll-snap-align: center; }
   .video-showcase-card { border-radius: 14px; }
   .video-showcase-footer { align-items: flex-start; padding: 0 24px; flex-direction: column; gap: 14px; }
 }
