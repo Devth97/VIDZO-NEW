@@ -51,7 +51,10 @@ export function setTestDb(db: Db | undefined) { g.__vidzoTestDb = db; }
 export async function getDb(): Promise<Db> {
   if (g.__vidzoTestDb) return g.__vidzoTestDb;
   const m = mode();
-  if (m === 'local') return (g.__vidzoDb ??= createPgliteDb(path.join(dataDir(), 'pglite')));
+  if (m === 'local') {
+    if (!g.__vidzoDb) void import('./jobs').then(j => j.startLocalRunner()); // local has no cron; jobs keep running after a restart
+    return (g.__vidzoDb ??= createPgliteDb(path.join(dataDir(), 'pglite')));
+  }
   if (m === 'live') {
     if (!cacheHostedDb) return createHostedDb(live.databaseUrl());
     return (g.__vidzoDb ??= createHostedDb(live.databaseUrl()));

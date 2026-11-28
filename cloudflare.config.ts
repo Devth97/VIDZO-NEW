@@ -1,10 +1,13 @@
-import { bindings, defineConfig, defineWorker } from "cf/config";
+import { bindings, defineConfig, defineWorker, triggers } from "cf/config";
 
 export default defineConfig({
   accountId: "a18166538751152974d6594a321c30ef",
   worker: defineWorker({
     name: "vidzo-studio",
-    entrypoint: "vinext/server/fetch-handler",
+    // vinext handles requests; src/worker.ts adds the scheduled job sweep.
+    entrypoint: "./src/worker.ts",
+    // Background job runner: one bounded sweep a minute (well inside the free plan's cron allowance).
+    triggers: [triggers.scheduled({ schedule: "* * * * *" })],
     compatibilityDate: "2026-11-25",
     previewUrls: false,
     assets: {

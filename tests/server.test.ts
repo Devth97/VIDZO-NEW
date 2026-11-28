@@ -124,7 +124,7 @@ describe('tenant isolation (RLS)', () => {
     const response = await GET();
     expect(response.status).toBe(200);
     expect(response.headers.get('Cache-Control')).toBe('no-store');
-    expect(await response.json()).toEqual({ status: 'ok' });
+    expect(await response.json()).toEqual({ status: 'ok', runnerAgeSeconds: null }); // no sweep has run yet
   });
 
   it('fails readiness without exposing a database error or credential', async () => {
@@ -288,5 +288,89 @@ describe('generation orchestration', () => {
     const saved = await repo.saveProject(db, ctx, p2.id, { ...p2, rights: true }, p2.revision);
     await upload(ctx, saved.id, 'reference', mp4(8), 'video/mp4');
     await expect(jobs.startAnalysis(ctx, saved.id)).rejects.toMatchObject({ status: 429 });
+  });
+});
+
+describe('durable runner (cron sweep)', () => {
+  const sweepUntilDone = async (jobId: string) => {
+    for (let i = 0; i < 40; i++) {
+      await jobs.sweepJobs();
+      const [j] = await db.query<{ status: string }>('select status from public.jobs where id = $1', [jobId]);
+      if (!['queued', 'submitted', 'running'].includes(j.status)) return j.status;
+    }
+    return 'timeout';
+  };
+  const frameJob = async (ctx: Ctx, projectId: string, sceneId?: string) => {
+    const q = await jobs.createServerQuote(db, ctx, { projectId, tier: 'professional', scope: 'frame', targetId: sceneId });
+    return jobs.createJob(ctx, { quoteId: q.id, idempotencyKey: q.id });
+  };
+
+  it('finishes a job with nobody polling and records a heartbeat', async () => {
+    const ctx = await user('cron@example.test');
+    await credit(ctx, 'starter');
+    const p = await readyProject(ctx);
+    const j = await frameJob(ctx, p.id);
+    expect(await sweepUntilDone(j.id)).toBe('succeeded');
+    expect((await repo.loadWallet(db, ctx.workspaceId)).held).toBe(0);
+    const beat = await jobs.runnerBeat(db);
+    expect(beat).toMatchObject({ errors: 0 });
+    expect(Date.now() - new Date(beat!.at).getTime()).toBeLessThan(60_000);
+  });
+
+  it('skips a job another runner holds, and resumes it once that lease is abandoned', async () => {
+    const ctx = await user('lease@example.test');
+    await credit(ctx, 'starter');
+    const p = await readyProject(ctx);
+    const j = await frameJob(ctx, p.id, p.scenes[0].id);
+    await db.query("update public.jobs set lease_until = now() + interval '1 minute' where id = $1", [j.id]);
+    await jobs.sweepJobs(); await jobs.advanceJob(j.id);
+    expect(await db.query("select 1 from public.attempts where job_id = $1 and status = 'pending'", [j.id])).toHaveLength(1);
+    await db.query("update public.jobs set lease_until = now() - interval '1 second' where id = $1", [j.id]); // the holder crashed
+    expect(await sweepUntilDone(j.id)).toBe('succeeded');
+  });
+
+  it('a crash mid-submission is reconciled, never blindly resubmitted', async () => {
+    const ctx = await user('crash@example.test');
+    await credit(ctx, 'starter');
+    const p = await readyProject(ctx);
+    const provider = simulatedProvider({ delayMs: 0 });
+    setTestProviders({ generation: provider });
+    const j = await frameJob(ctx, p.id, p.scenes[0].id);
+    // The previous runner committed 'submitting', reached the provider, then died before saving the request id.
+    const [att] = await db.query<{ id: string; idempotency_key: string; task_id: string }>('select id, idempotency_key, task_id from public.attempts where job_id = $1', [j.id]);
+    provider.submissions.set(att.idempotency_key, `sim_${Date.now()}_${att.task_id}`);
+    await db.query("update public.attempts set status = 'submitting', tries = 1 where id = $1", [att.id]);
+    await db.query("update public.jobs set lease_until = now() - interval '1 second' where id = $1", [j.id]);
+    expect(await sweepUntilDone(j.id)).toBe('succeeded');
+    expect(provider.submissions.size).toBe(1);
+    expect(await db.query("select 1 from public.assets where job_id = $1 and kind = 'frame'", [j.id])).toHaveLength(1);
+  });
+
+  it('settles a job whose items all finished before a crash prevented settlement', async () => {
+    const ctx = await user('settle@example.test');
+    await credit(ctx, 'starter');
+    const p = await readyProject(ctx);
+    const j = await frameJob(ctx, p.id);
+    await db.query("update public.attempts set status = 'failed', error = 'Provider rejected the request.', updated_at = now() - interval '1 hour' where job_id = $1", [j.id]);
+    expect(await sweepUntilDone(j.id)).toBe('failed');
+    expect(await repo.loadWallet(db, ctx.workspaceId)).toMatchObject({ held: 0, spent: 0, available: 100 });
+  });
+
+  it('flags a job that runs past an hour, keeps it running, and lets an admin stop the rest', async () => {
+    const ctx = await user('stuck@example.test');
+    await credit(ctx, 'starter');
+    const p = await readyProject(ctx);
+    setTestProviders({ generation: simulatedProvider({ delayMs: 10 * 60_000 }) }); // never finishes during the test
+    const j = await frameJob(ctx, p.id);
+    await db.query("update public.jobs set created_at = now() - interval '61 minutes' where id = $1", [j.id]);
+    await jobs.sweepJobs();
+    const [flagged] = await db.query<{ status: string; needs_attention: boolean; stage: string }>('select status, needs_attention, stage from public.jobs where id = $1', [j.id]);
+    expect(flagged).toMatchObject({ needs_attention: true });
+    expect(['submitted', 'running']).toContain(flagged.status);
+    expect(flagged.stage).toMatch(/longer than expected/);
+    await jobs.resolveUnknown(j.id, 'stop_remaining');
+    const [stopped] = await db.query<{ status: string; needs_attention: boolean }>('select status, needs_attention from public.jobs where id = $1', [j.id]);
+    expect(stopped).toMatchObject({ status: 'failed', needs_attention: false });
+    expect(await repo.loadWallet(db, ctx.workspaceId)).toMatchObject({ held: 0, available: 100 });
   });
 });

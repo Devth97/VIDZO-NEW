@@ -35,9 +35,31 @@ Live sign-in uses Google through Supabase (`POST /api/auth/google` → PKCE call
 - **Product fidelity**: `brief.fidelity` (shape, colour, packaging text, prohibited changes) is sent in every frame/clip prompt and shown beside the customer's original product photos in the storyboard. When product photos exist, approving a frame requires ticking that the product matches them; the tick belongs to that frame only. Adding notes invalidates frames made without them.
 - **Job states** name each item by scene, explain held/settled/released credits, the unknown-outcome check, review, and technical failure (free retry quote plus support link).
 
+## Durable job runner (28 November 2026)
+
+**Choice: a Cloudflare Cron Trigger on the existing `vidzo-studio` Worker**, calling the existing orchestration (`sweepJobs` → `advanceJob`). Trigger.dev was the original plan; it was not adopted and its unused SDK was removed so there is only one orchestrator.
+
+| | Cloudflare cron (chosen) | Trigger.dev |
+| --- | --- | --- |
+| New accounts / secrets | None: same Worker, Hyperdrive binding and deploy pipeline | New project, API key, deployed task bundle, and a direct database path (Hyperdrive is Workers-only) |
+| Fit with current code | Reuses leases, attempts, reconciliation and ledger as-is | Would need the job state machine moved into tasks, or a second orchestrator beside it |
+| Operating cost | Within the Workers plan: 1,440 sweeps/day, about 3 queries per idle sweep. Free-plan CPU is 10 ms per invocation; a busy sweep may need the Workers Paid plan. Check current Cloudflare pricing before launch | A usage-billed plan on top of Cloudflare, plus run-time charges for long polls |
+| Latency | A step at most once a minute after the first ~30 s (`after()` fast path) | Seconds |
+| Strengths | Simple, nothing new to operate | Built-in retries, dashboards, long-running tasks |
+
+Revisit if clip polling at one-minute granularity becomes a product problem, or if heavy work ever has to run inside the runner (rendering belongs in the media worker, not here).
+
+How it works:
+- `src/worker.ts` is the Worker entry: vinext serves requests, and `scheduled()` runs `sweepJobs()` every minute (`cloudflare.config.ts` → `triggers.scheduled`). Locally, `startLocalRunner()` sweeps every 3 s in the Node process.
+- A sweep is bounded (10 jobs, 20 s). It picks jobs with a due attempt and an expired or absent lease, plus jobs whose items all finished but were never settled.
+- Leases carry a token (the exact `lease_until` value). Each step renews it; a runner that lost its lease stops and cannot clear another runner's lease. A completed result is stored under a row lock, at most once.
+- A crash between "submitting" and saving the request id becomes `unknown` and is reconciled by idempotency key; if the provider cannot look it up (fal), it goes to manual attention with credits held. Nothing is blindly resubmitted.
+- A job unfinished after an hour is flagged `needs_attention` and keeps running. Admins can mark unknown items failed, resubmit them (explicit duplicate-charge warning), or **stop unfinished** items: delivered items stay settled and the rest of the hold is released.
+- `GET /api/jobs/[id]` only reads persisted state; polling no longer drives work. `POST /api/jobs` still starts the first steps in `after()`.
+- Each sweep writes a heartbeat to `admin_settings.runner`. The admin page shows it, and `/api/health` returns `runnerAgeSeconds` so a deploy check can confirm the cron fires.
+
 ## Not built yet
 
 - FFmpeg media worker service (`services/media-worker`): the adapter contract exists in `providers/worker.ts`.
-- Background runner for live mode: jobs advance in `after()` and on every poll; a Cloudflare Cron/Queue consumer (or Trigger.dev) should call `advanceJob` for production reliability.
 - Playwright E2E/axe specs, CI workflow, Lighthouse runs, CSP header.
 - Custom-domain activation and end-to-end hosted Google sign-in verification. The basic Workers deployment and GitHub workflow now exist; see `docs/DEPLOYMENT.md`.

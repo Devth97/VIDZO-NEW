@@ -12,7 +12,7 @@ The Worker uses vinext alongside the existing Next.js setup. Node/Next commands 
 
 ## Deployment through GitHub
 
-`.github/workflows/deploy.yml` verifies types, unit/integration tests, the production dependency audit, the Next.js build and the Workers build. Pushes to `main` deploy only after verification; pull requests verify without deployment secrets. After deployment, the workflow checks `/api/health`, which executes a database readiness query and returns no identifiers or credentials.
+`.github/workflows/deploy.yml` verifies types, unit/integration tests, the production dependency audit, the Next.js build and the Workers build. Pushes to `main` deploy only after verification; pull requests verify without deployment secrets. After deployment, the workflow checks `/api/health`, which executes a database readiness query and returns no identifiers or credentials. The Worker also carries a one-minute Cron Trigger (`cloudflare.config.ts`) that runs the background job sweep; `/api/health` reports `runnerAgeSeconds`, which should stay under about 120 once the cron is live. If it is `null` or keeps growing, check the Worker's Triggers tab in the dashboard.
 
 GitHub repository secrets:
 

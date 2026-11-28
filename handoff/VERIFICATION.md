@@ -1,5 +1,16 @@
 # Verification log
 
+## 28 November 2026 — Slice 2: durable job runner (Claude)
+
+| Check | Result |
+| --- | --- |
+| `pnpm typecheck`, `pnpm typecheck:cloudflare` | Passed |
+| `pnpm test` | Passed: 8 files, 82 tests (5 new runner tests in `tests/server.test.ts`) |
+| `pnpm build`, `pnpm build:vinext`, `pnpm audit --prod` | Passed; no known vulnerabilities |
+| Workers build output | `worker.config.json` carries `triggers: [{ type: scheduled, schedule: "* * * * *" }]`; the bundle's default export is vinext's handler plus `scheduled()` |
+| Runner tests (PGlite, simulated provider) | A job finishes through cron sweeps alone, with no polling, and records a heartbeat. A job under another runner's lease is skipped, then resumed once that lease is abandoned. A crash mid-submission is reconciled by idempotency key: one provider submission, one stored frame. A job whose items finished before a crash is settled and its credits released. A job past one hour is flagged and keeps running; the admin "stop unfinished" action releases the hold |
+| Not verified | No live job has run through the deployed cron: live pricing and providers are not configured. Lease contention was tested with interleaved transactions on one PGlite connection, not with parallel Postgres backends |
+
 ## 28 November 2026 — Slice 1: quote and review clarity (Claude)
 
 | Check | Result |

@@ -4,6 +4,6 @@
     "strict": true, "skipLibCheck": true, "noEmit": true,
     "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["cloudflare.config.ts", "vite.config.ts", "src/lib/server/db-cloudflare.ts", ".cloudflare/types"],
+  "include": ["cloudflare.config.ts", "vite.config.ts", "src/lib/server/db-cloudflare.ts", "src/worker.ts", ".cloudflare/types"],
   "exclude": ["node_modules", "dist"]
 }

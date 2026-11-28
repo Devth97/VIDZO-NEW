@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { assertQuote, buildScenePrompt, createQuote, currentClip, logoAsset, productAssets, currentSheet, referenceAsset, setRoles } from '@/lib/domain/project';
 import { quoteScopes, type JobView, type Project, type Quote, type QuoteTask, type Tier } from '@/lib/domain/schema';
 import type { Ctx } from './auth';
-import { pricing } from './config';
+import { mode, pricing } from './config';
 import { getDb, type Queryable } from './db';
 import { domain, HttpError } from './errors';
 import { analyzer, providerFor } from './providers';
@@ -138,23 +138,83 @@ export async function startAnalysis(ctx: Ctx, projectId: string): Promise<{ id: 
 // Orchestration. Each tick takes a lease so only one runner advances a job; each attempt transition is
 // committed before the next external call, so a crash can always be resumed or reconciled.
 // ---------------------------------------------------------------------------------------------
-type JobRow = { id: string; workspace_id: string; project_id: string; user_id: string; kind: string; status: string; credits_reserved: number; input: { tier?: Tier; tasks?: (QuoteTask & { provider: ProviderTask })[]; referenceAssetId?: string } };
+type JobRow = { id: string; workspace_id: string; project_id: string; user_id: string; kind: string; status: string; credits_reserved: number; created_at: Date; lease_token: string; input: { tier?: Tier; tasks?: (QuoteTask & { provider: ProviderTask })[]; referenceAssetId?: string } };
 type AttemptRow = { id: string; task_id: string; kind: string; status: string; tries: number; request_id: string | null; idempotency_key: string; next_at: Date; error: string | null };
 const terminal = (s: string) => s === 'succeeded' || s === 'failed';
 const MAX_TRIES = 3; // first attempt + two transient retries
 const POLL_MS = Number(process.env.VIDZO_POLL_MS ?? 1500);
 
+/** A job still unfinished after this long is flagged for the team. It keeps running and its credits stay held. */
+export const JOB_ATTENTION_MS = 60 * 60_000;
+
+// The lease's exact timestamp is its token: a runner renews or releases only the lease it holds, so one whose
+// lease lapsed (a slow download, a frozen isolate) can never clear or extend another runner's lease.
+const LEASE = "lease_until = now() + interval '120 seconds'";
+async function renewLease(jobId: string, token: string): Promise<string | null> {
+  const [r] = await (await getDb()).query<{ lease_token: string }>(`update public.jobs set ${LEASE} where id = $1 and lease_until::text = $2 and lease_until > now() returning lease_until::text as lease_token`, [jobId, token]);
+  return r?.lease_token ?? null;
+}
+
 export async function advanceJob(jobId: string): Promise<void> {
   const db = await getDb();
-  const [job] = await db.query<JobRow>("update public.jobs set lease_until = now() + interval '120 seconds' where id = $1 and status in ('queued', 'submitted', 'running') and (lease_until is null or lease_until < now()) returning *", [jobId]);
+  const [job] = await db.query<JobRow>(`update public.jobs set ${LEASE} where id = $1 and status in ('queued', 'submitted', 'running') and (lease_until is null or lease_until < now()) returning *, lease_until::text as lease_token`, [jobId]);
   if (!job) return;
+  let token: string | null = job.lease_token;
   try {
     const attempts = await db.query<AttemptRow>('select * from public.attempts where job_id = $1 order by created_at, task_id', [jobId]);
-    for (const a of attempts) if (!terminal(a.status) && new Date(a.next_at).getTime() <= Date.now()) await step(job, a);
+    for (const a of attempts) {
+      if (terminal(a.status) || new Date(a.next_at).getTime() > Date.now()) continue;
+      token = await renewLease(jobId, token);
+      if (!token) return; // lease lost: another runner owns the job now
+      await step(job, a);
+    }
     await settleIfDone(job);
   } finally {
-    await db.query('update public.jobs set lease_until = null where id = $1', [jobId]);
+    if (token) await db.query('update public.jobs set lease_until = null where id = $1 and lease_until::text = $2', [jobId, token]);
   }
+}
+
+/**
+ * The durable runner. A Cloudflare cron calls this every minute (src/worker.ts), so jobs progress with every
+ * browser closed. Bounded per run; leases make it safe alongside the request-time fast path. Picks jobs
+ * with a due attempt, plus jobs whose attempts all finished but were never settled (a crash before settlement).
+ */
+export async function sweepJobs({ maxJobs = 10, budgetMs = 20_000 }: { maxJobs?: number; budgetMs?: number } = {}) {
+  const started = Date.now();
+  const db = await getDb();
+  const open = "a.job_id = j.id and a.status not in ('succeeded', 'failed')";
+  const due = await db.query<{ id: string }>(`select j.id from public.jobs j where j.status in ('queued', 'submitted', 'running') and (j.lease_until is null or j.lease_until < now())
+    and (exists (select 1 from public.attempts a where ${open} and a.next_at <= now()) or not exists (select 1 from public.attempts a where ${open}))
+    order by j.updated_at limit $1`, [maxJobs]);
+  let advanced = 0, errors = 0;
+  for (const { id } of due) {
+    if (Date.now() - started > budgetMs) break;
+    try { await advanceJob(id); advanced++; } catch (e) { errors++; console.error('[vidzo] sweep: advance failed', id, e instanceof Error ? e.message.slice(0, 200) : e); }
+  }
+  const [{ active, attention }] = await db.query<{ active: string; attention: string }>("select count(*) active, count(*) filter (where needs_attention) attention from public.jobs where status in ('queued', 'submitted', 'running')");
+  const beat = { at: new Date().toISOString(), due: due.length, advanced, errors, active: Number(active), attention: Number(attention), ms: Date.now() - started };
+  await db.query("insert into public.admin_settings(key, value) values ('runner', $1) on conflict (key) do update set value = excluded.value, updated_at = now()", [JSON.stringify(beat)]);
+  return beat;
+}
+
+const g = globalThis as unknown as { __vidzoLocalRunner?: boolean };
+/** Local test backend stand-in for the Cloudflare cron: a sweep every few seconds in this Node process. */
+export function startLocalRunner() {
+  if (mode() !== 'local' || g.__vidzoLocalRunner) return;
+  g.__vidzoLocalRunner = true;
+  let busy = false;
+  const timer = setInterval(() => {
+    if (busy) return;
+    busy = true;
+    sweepJobs().catch(e => console.error('[vidzo] local sweep failed', e)).finally(() => { busy = false; });
+  }, 3000);
+  timer.unref?.();
+}
+
+export type RunnerBeat = Awaited<ReturnType<typeof sweepJobs>>;
+export async function runnerBeat(q: Queryable): Promise<RunnerBeat | null> {
+  const [row] = await q.query<{ value: RunnerBeat }>("select value from public.admin_settings where key = 'runner'");
+  return row?.value ?? null;
 }
 
 async function setAttempt(id: string, patch: Partial<{ status: string; request_id: string; error: string | null; tries: number; next_in_ms: number; output_asset_id: string }>) {
@@ -204,11 +264,14 @@ async function step(job: JobRow, a: AttemptRow) {
     if (st.state === 'failed') { await setAttempt(a.id, { status: 'failed', error: st.error ?? 'Generation failed.' }); return; }
     const file = await provider.result(a.request_id!, task.provider);
     const db = await getDb();
-    const outputId = await db.tx(async q => {
+    // Store a result at most once, even if a lapsed lease let two runners poll the same completed request.
+    await db.tx(async q => {
+      const [locked] = await q.query<{ status: string }>('select status from public.attempts where id = $1 for update', [a.id]);
+      if (terminal(locked.status)) return;
       const [{ n }] = await q.query<{ n: string }>('select count(*) n from public.assets where project_id = $1 and kind = $2 and coalesce(scene_id, \'\') = coalesce($3, \'\') and coalesce(candidate_id, \'\') = coalesce($4, \'\')', [job.project_id, task.kind, task.sceneId ?? null, task.candidateId ?? null]);
-      return storeOutput(q, job.workspace_id, { id: job.project_id }, { kind: task.kind, name: file.name, mime: file.mime, bytes: file.bytes, placeholder: file.placeholder, sceneId: task.sceneId, candidateId: task.candidateId, depHash: task.depHash, version: Number(n) + 1, jobId: job.id });
+      const outputId = await storeOutput(q, job.workspace_id, { id: job.project_id }, { kind: task.kind, name: file.name, mime: file.mime, bytes: file.bytes, placeholder: file.placeholder, sceneId: task.sceneId, candidateId: task.candidateId, depHash: task.depHash, version: Number(n) + 1, jobId: job.id });
+      await q.query("update public.attempts set status = 'succeeded', output_asset_id = $2, error = null, updated_at = now() where id = $1", [a.id, outputId]);
     });
-    await setAttempt(a.id, { status: 'succeeded', output_asset_id: outputId });
   } catch (e) {
     // Status/result polling problems are not proof of failure: back off and try again later.
     const msg = e instanceof Error ? e.message.slice(0, 200) : 'Polling failed.';
@@ -244,9 +307,10 @@ async function settleIfDone(job: JobRow) {
   const done = attempts.filter(a => terminal(a.status)).length;
   // Flag for manual reconciliation only after one reconciliation attempt failed to find the request.
   const unknown = attempts.some(a => a.status === 'unknown' && new Date(a.next_at).getTime() > Date.now());
+  const overdue = Date.now() - new Date(job.created_at).getTime() > JOB_ATTENTION_MS;
   if (done < attempts.length) {
     const label = job.kind === 'analysis' ? 'Analysing the reference' : `${done} of ${attempts.length} ${job.kind === 'characters' || job.kind === 'character' ? 'identity sheets' : job.kind === 'frame' ? 'frames' : job.kind === 'export' ? 'assembly steps' : 'clips'} complete`;
-    await db.query('update public.jobs set stage = $2, needs_attention = $3, updated_at = now() where id = $1', [job.id, unknown ? 'Waiting for provider reconciliation · credits stay held' : label, unknown]);
+    await db.query('update public.jobs set stage = $2, needs_attention = $3, updated_at = now() where id = $1', [job.id, unknown ? 'Waiting for provider reconciliation · credits stay held' : overdue ? `${label} · taking longer than expected, the VIDZO team is checking · credits stay held` : label, unknown || overdue]);
     return;
   }
   const ok = new Set(attempts.filter(a => a.status === 'succeeded').map(a => a.task_id));
@@ -263,7 +327,7 @@ async function settleIfDone(job: JobRow) {
   });
 }
 
-/** In-process driver for the local backend (and a best-effort fallback live). Trigger.dev drives live jobs. */
+/** Request-time fast path that starts work right after a job is created. The cron sweep guarantees progress. */
 export async function drive(jobId: string, budgetMs = 10 * 60_000) {
   const until = Date.now() + budgetMs;
   while (Date.now() < until) {
@@ -281,11 +345,18 @@ export async function jobView(q: Queryable, ws: string, jobId: string): Promise<
   return { id: j.id, projectId: j.project_id, kind: j.kind, status: j.status, stage: j.stage, error: j.error ?? undefined, creditsReserved: j.credits_reserved, creditsSettled: j.credits_settled, createdAt: new Date(j.created_at).toISOString(), updatedAt: new Date(j.updated_at).toISOString(), tasks: tasks.map(t => ({ taskId: t.task_id, kind: t.kind, sceneId: t.scene_id ?? undefined, status: t.status, error: t.error ?? undefined })) };
 }
 
-/** Admin resolution of an unknown provider outcome. Resubmitting may cause a duplicate provider charge; it is an explicit decision. */
-export async function resolveUnknown(jobId: string, action: 'mark_failed' | 'resubmit') {
+export const resolveActions = ['mark_failed', 'resubmit', 'stop_remaining'] as const;
+/**
+ * Admin exception path. mark_failed / resubmit act on unknown provider outcomes; resubmitting may cause a
+ * duplicate provider charge, so it is an explicit decision. stop_remaining ends every unfinished item of a stuck
+ * job: delivered items stay settled and the rest of the hold is released.
+ */
+export async function resolveUnknown(jobId: string, action: (typeof resolveActions)[number]) {
   const db = await getDb();
-  await db.query(`update public.attempts set status = $2, error = $3, next_at = now(), updated_at = now() where job_id = $1 and status in ('unknown', 'submitting')`,
-    [jobId, action === 'mark_failed' ? 'failed' : 'pending', action === 'mark_failed' ? 'Marked failed by an administrator after reconciliation.' : null]);
+  const statuses = action === 'stop_remaining' ? ['pending', 'submitting', 'submitted', 'running', 'unknown'] : ['unknown', 'submitting'];
+  const error = action === 'resubmit' ? null : action === 'stop_remaining' ? 'Stopped by the VIDZO team; its credits were released.' : 'Marked failed by an administrator after reconciliation.';
+  await db.query(`update public.attempts set status = $2, error = $3, next_at = now(), updated_at = now() where job_id = $1 and status = any($4::text[])`,
+    [jobId, action === 'resubmit' ? 'pending' : 'failed', error, statuses]);
   await db.query('update public.jobs set needs_attention = false where id = $1', [jobId]);
   await advanceJob(jobId);
 }

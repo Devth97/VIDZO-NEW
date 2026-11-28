@@ -1,6 +1,6 @@
 import { adminRoute } from '@/lib/server/http';
 import { getDb } from '@/lib/server/db';
-import { limits } from '@/lib/server/jobs';
+import { limits, runnerBeat } from '@/lib/server/jobs';
 import { getStorage } from '@/lib/server/storage';
 
 export const GET = adminRoute(async () => {
@@ -15,5 +15,5 @@ export const GET = adminRoute(async () => {
   const [today] = await db.query<{ credits: string }>("select coalesce(sum(credits_reserved), 0) credits from public.jobs where created_at > date_trunc('day', now()) and status <> 'failed'");
   const tickets = await db.query("select t.id, t.subject, t.body, t.status, t.created_at, t.project_id, t.job_id, p.email from public.support_tickets t join public.profiles p on p.user_id = t.user_id where t.status = 'open' order by t.created_at desc limit 50");
   const payments = await db.query('select id, order_id, pack_id, credits, amount_paise, status, failure_reason, created_at from public.payments order by created_at desc limit 30');
-  return { jobs, qa: queue, limits: await limits(db), committedCreditsToday: Number(today.credits), tickets, payments };
+  return { runner: await runnerBeat(db), jobs, qa: queue, limits: await limits(db), committedCreditsToday: Number(today.credits), tickets, payments };
 });

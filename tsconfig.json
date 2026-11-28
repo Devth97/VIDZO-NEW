@@ -8,5 +8,5 @@
     "plugins": [{ "name": "next" }], "paths": { "@/*": ["./src/*"] }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/dev/types/**/*.ts"],
-  "exclude": ["node_modules", "dist", ".cloudflare", "cloudflare.config.ts", "vite.config.ts", "src/lib/server/db-cloudflare.ts"]
+  "exclude": ["node_modules", "dist", ".cloudflare", "cloudflare.config.ts", "vite.config.ts", "src/lib/server/db-cloudflare.ts", "src/worker.ts"]
 }
