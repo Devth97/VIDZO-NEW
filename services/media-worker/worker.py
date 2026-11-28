@@ -5,6 +5,7 @@ Standard library only, plus the ffmpeg and ffprobe binaries. Runs as one small c
   POST /render                    same body -> the MP4 itself, rendered inside the request (report in the
                                   X-Vidzo-Report header, base64 JSON). For hosts that only give CPU during a
                                   request (Cloud Run request-based billing); nothing is kept afterwards.
+  POST /selftest?style=bold|none  renders synthetic test clips end to end -> {ok, report} (deploy check)
   POST /jobs                      {idempotencyKey, clips[], logo?, overlay, target} -> {id, state}
   GET  /jobs?idempotencyKey=...   -> {id, state}  (reconciliation; 404 when unknown)
   GET  /jobs/<id>                 -> {id, state, error?, report?}
@@ -39,6 +40,8 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+import effects
+
 TARGET = {"width": 1080, "height": 1920, "fps": 30}
 DURATION_TOLERANCE = 0.15  # seconds between the planned and the rendered length
 
@@ -70,6 +73,8 @@ class Config:
     font: str
     ffmpeg: str = "ffmpeg"
     ffprobe: str = "ffprobe"
+    hyperframes: str = "hyperframes"
+    gsap: str = "/opt/vidzo/gsap.min.js"
     allow_loopback_http: bool = False
     limits: Limits = field(default_factory=Limits)
 
@@ -88,6 +93,8 @@ class Config:
             font=os.environ.get("MEDIA_WORKER_FONT", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
             ffmpeg=os.environ.get("FFMPEG", "ffmpeg"),
             ffprobe=os.environ.get("FFPROBE", "ffprobe"),
+            hyperframes=os.environ.get("MEDIA_WORKER_HYPERFRAMES", "hyperframes"),
+            gsap=os.environ.get("MEDIA_WORKER_GSAP", "/opt/vidzo/gsap.min.js"),
             allow_loopback_http=os.environ.get("MEDIA_WORKER_ALLOW_LOOPBACK_HTTP") == "1",
         )
 
@@ -121,13 +128,21 @@ def validate_request(body: object, limits: Limits) -> dict:
     overlay = body.get("overlay") or {}
     if not isinstance(overlay, dict):
         raise JobError("overlay must be an object.")
-    cta = overlay.get("cta") or ""
     color = overlay.get("color") or "#25291f"
-    if not isinstance(cta, str) or len(cta) > 80 or any(ord(ch) < 32 for ch in cta):
-        raise JobError("The call to action must be at most 80 printable characters.")
     if not isinstance(color, str) or not HEX_COLOR.match(color):
         raise JobError("overlay.color must be a #RRGGBB colour.")
-    return {"idempotencyKey": key, "clips": clips, "logo": logo, "cta": cta.strip(), "color": color.lower()}
+    texts = {}
+    for name, label, limit in (("cta", "The call to action", 80), ("headline", "The hook headline", 40), ("badge", "The offer badge", 24)):
+        value = overlay.get(name) or ""
+        if not isinstance(value, str) or len(value) > limit or any(ord(ch) < 32 for ch in value):
+            raise JobError(f"{label} must be at most {limit} printable characters.")
+        texts[name] = value.strip()
+    style = overlay.get("style") or "none"
+    if style not in effects.STYLES:
+        raise JobError("Unknown effects style.")
+    if style != "none" and not (texts["headline"] and texts["cta"]):
+        raise JobError("An effects style needs a hook headline and a call to action.")
+    return {"idempotencyKey": key, "clips": clips, "logo": logo, **texts, "style": style, "color": color.lower()}
 
 
 def check_url(raw: str, cfg: Config) -> urllib.parse.SplitResult:
@@ -255,29 +270,40 @@ def filter_escape(value: str) -> str:
     return value.replace("\\", "/").replace(":", "\\:").replace("'", "\\'").replace(",", "\\,").replace("[", "\\[").replace("]", "\\]")
 
 
-def build_ffmpeg_args(cfg: Config, clips: list[Path], durations: list[float], out: Path, logo: Path | None, cta_file: Path | None, color: str) -> list[str]:
+def build_ffmpeg_args(cfg: Config, clips: list[Path], durations: list[float], out: Path, logo: Path | None, cta_file: Path | None, color: str,
+                      fx: Path | None = None) -> list[str]:
     """
     One deterministic encode: each clip is scaled to cover 1080x1920 and centre-cropped, resampled to 30 fps and
     trimmed to its probed length; clip audio (and therefore any reference audio) is dropped; a silent AAC track is
-    generated because no licensed music is supplied yet. The customer's logo is composited unaltered apart from
-    proportional scaling; the CTA is drawn from a text file (never parsed as filter syntax) for the last 3 seconds.
+    generated because no licensed music is supplied yet. An optional transparent motion-graphics layer (effects.py)
+    goes over the footage; the customer's logo is composited on top, unaltered apart from proportional scaling.
+    Without effects, the CTA is drawn from a text file (never parsed as filter syntax) for the last 3 seconds,
+    inside the social-safe band that platform UI does not cover.
     """
     w, h, fps = TARGET["width"], TARGET["height"], TARGET["fps"]
     total = round(sum(durations), 3)
     args = [cfg.ffmpeg, "-hide_banner", "-nostdin", "-y", "-v", "error"]
     for c in clips:
         args += ["-protocol_whitelist", "file", "-i", str(c)]
-    logo_index = None
+    index = len(clips)
+    fx_index = logo_index = None
+    if fx:
+        fx_index, index = index, index + 1
+        args += ["-protocol_whitelist", "file", "-c:v", "libvpx-vp9", "-i", str(fx)]  # libvpx keeps the alpha channel
     if logo:
-        logo_index = len(clips)
+        logo_index, index = index, index + 1
         args += ["-protocol_whitelist", "file", "-loop", "1", "-t", f"{total}", "-i", str(logo)]
-    audio_index = len(clips) + (1 if logo else 0)
+    audio_index = index
     args += ["-f", "lavfi", "-t", f"{total}", "-i", "anullsrc=channel_layout=stereo:sample_rate=48000"]
 
     chains = [f"[{i}:v]scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},fps={fps},setsar=1,format=yuv420p,"
               f"trim=duration={d:.3f},setpts=PTS-STARTPTS[v{i}]" for i, d in enumerate(durations)]
     chains.append("".join(f"[v{i}]" for i in range(len(clips))) + f"concat=n={len(clips)}:v=1:a=0[base]")
     last = "base"
+    if fx_index is not None:
+        chains.append(f"[{fx_index}:v]format=yuva420p[fx]")
+        chains.append(f"[{last}][fx]overlay=x=0:y=0:shortest=1:format=auto[withfx]")
+        last = "withfx"
     if logo_index is not None:
         chains.append(f"[{logo_index}:v]scale=w=260:h=260:force_original_aspect_ratio=decrease,format=rgba[logo]")
         chains.append(f"[{last}][logo]overlay=x=W-w-64:y=72:shortest=1:format=auto[withlogo]")
@@ -285,7 +311,7 @@ def build_ffmpeg_args(cfg: Config, clips: list[Path], durations: list[float], ou
     if cta_file:
         start = max(0.0, total - 3.0)
         chains.append(f"[{last}]drawtext=fontfile='{filter_escape(cfg.font)}':textfile='{filter_escape(str(cta_file))}':expansion=none:"
-                      f"fontsize=64:fontcolor=white:box=1:boxcolor={color}@0.9:boxborderw=28:x=(w-text_w)/2:y=h-text_h-240:"
+                      f"fontsize=64:fontcolor=white:box=1:boxcolor={color}@0.9:boxborderw=28:x=(w-text_w)/2:y={effects.SAFE_BOTTOM}-text_h-160:"
                       f"enable='gte(t\\,{start:.3f})'[cta]")
         last = "cta"
     chains.append(f"[{last}]format=yuv420p[vout]")
@@ -413,33 +439,50 @@ def ffmpeg_version(cfg: Config) -> str:
 
 
 def render(job: dict, cfg: Config, work: Path) -> dict:
+    """Downloads the request's inputs into `work`, then assembles them."""
     req = job["request"]
     if work.exists():
         shutil.rmtree(work)  # a restart redoes the whole render; output is deterministic
     work.mkdir(parents=True)
-    clips, inputs = [], []
+    clips = []
     for i, url in enumerate(req["clips"]):
         p = work / f"clip{i}.mp4"
         fetch(url, p, cfg.limits.max_clip_bytes, cfg)
-        inputs.append(check_clip(probe(p, cfg), cfg.limits))
         clips.append(p)
-    durations = [c["seconds"] for c in inputs]
-    if sum(durations) > cfg.limits.max_total_seconds:
-        raise JobError(f"The finished ad would be longer than {cfg.limits.max_total_seconds:g} seconds.")
     logo = None
     if req.get("logo"):
         logo = work / "logo.img"
         fetch(req["logo"], logo, cfg.limits.max_logo_bytes, cfg)
+    return assemble(job["id"], req, cfg, work, clips, logo)
+
+
+def assemble(job_id: str, req: dict, cfg: Config, work: Path, clips: list[Path], logo: Path | None) -> dict:
+    """Checks local inputs, renders the effects layer if any, encodes, verifies and moves the result next to `work`."""
+    inputs = [check_clip(probe(p, cfg), cfg.limits) for p in clips]
+    durations = [c["seconds"] for c in inputs]
+    if sum(durations) > cfg.limits.max_total_seconds:
+        raise JobError(f"The finished ad would be longer than {cfg.limits.max_total_seconds:g} seconds.")
+    if logo:
         check_logo(probe(logo, cfg), cfg.limits)
-    cta = None
-    if req.get("cta"):
+    cta = fx = None
+    if req.get("style", "none") != "none":
+        fx_dir, fx = work / "fx", work / "fx.webm"
+        effects.write_project(fx_dir, req["style"], req, round(sum(durations), 3), Path(cfg.gsap))
+        try:
+            res = effects.render(cfg.hyperframes, fx_dir, fx, cfg.limits.render_timeout)
+        except subprocess.TimeoutExpired as e:
+            raise JobError("Rendering the motion graphics took too long.") from e
+        if res.returncode != 0 or not fx.is_file():
+            print(f"[media-worker] effects render failed for {job_id}: {(res.stdout + res.stderr).decode('utf-8', 'replace')[-2000:]}", file=sys.stderr)
+            raise JobError("Rendering the motion graphics failed.")
+    elif req.get("cta"):
         cta = work / "cta.txt"
         cta.write_text(req["cta"], "utf-8")
     out = work / "out.mp4"
-    args = build_ffmpeg_args(cfg, clips, durations, out, logo, cta, req["color"])
+    args = build_ffmpeg_args(cfg, clips, durations, out, logo, cta, req["color"], fx)
     res = run_tool(args, cfg.limits.render_timeout, cfg.limits)
     if res.returncode != 0 or not out.exists():
-        print(f"[media-worker] ffmpeg failed for {job['id']}: {res.stderr.decode('utf-8', 'replace')[-2000:]}", file=sys.stderr)
+        print(f"[media-worker] ffmpeg failed for {job_id}: {res.stderr.decode('utf-8', 'replace')[-2000:]}", file=sys.stderr)
         raise JobError("Assembly failed while encoding.")
     output = check_output(probe(out, cfg), sum(durations))
     decode = run_tool([cfg.ffmpeg, "-v", "error", "-xerror", "-protocol_whitelist", "file", "-i", str(out), "-f", "null", "-"], cfg.limits.render_timeout, cfg.limits)
@@ -447,18 +490,37 @@ def render(job: dict, cfg: Config, work: Path) -> dict:
         raise JobError("The rendered file did not decode cleanly.")
     final = work.parent / "result.mp4"
     os.replace(out, final)
-    for p in work.iterdir():
-        p.unlink(missing_ok=True)  # drop customer inputs as soon as the deliverable exists
-    work.rmdir()
+    shutil.rmtree(work, ignore_errors=True)  # drop customer inputs as soon as the deliverable exists
     upscaled = any(c["width"] < TARGET["width"] or c["height"] < TARGET["height"] for c in inputs)
     return {
         "output": {**output, "bytes": final.stat().st_size},
         "inputs": [{k: c[k] for k in ("seconds", "width", "height", "videoCodec")} for c in inputs],
         "upscaled": upscaled,
         "audio": "Silent AAC track: no licensed music supplied; clip and reference audio excluded.",
-        "overlay": {"logo": bool(logo), "cta": bool(cta)},
+        "overlay": {"logo": bool(logo), "cta": bool(cta or fx), "effects": req.get("style", "none")},
         "encoder": {"ffmpeg": ffmpeg_version(cfg), "video": "libx264 high@4.2 crf 20 yuv420p, 30 fps, GOP 60", "audio": "aac 128k 48 kHz stereo"},
     }
+
+
+def selftest(cfg: Config, work: Path, style: str) -> dict:
+    """
+    End-to-end check of a deployed worker with no customer data and no network: synthesises a portrait and a
+    landscape test-pattern clip plus a plain logo with ffmpeg, then runs the normal assembly, effects included.
+    """
+    work.mkdir(parents=True, exist_ok=True)
+    clips = []
+    for i, (size, seconds) in enumerate((("720x1280", 2), ("1280x720", 3))):
+        p = work / f"clip{i}.mp4"
+        res = run_tool([cfg.ffmpeg, "-v", "error", "-f", "lavfi", "-i", f"testsrc2=size={size}:rate=24:duration={seconds}",
+                        "-c:v", "libx264", "-pix_fmt", "yuv420p", str(p)], 120, cfg.limits)
+        if res.returncode != 0:
+            raise JobError("Could not create the test clips.")
+        clips.append(p)
+    logo = work / "logo.png"
+    if run_tool([cfg.ffmpeg, "-v", "error", "-f", "lavfi", "-i", "color=c=white:size=400x200", "-frames:v", "1", str(logo)], 60, cfg.limits).returncode != 0:
+        raise JobError("Could not create the test logo.")
+    req = {"cta": "Shop the test bottle", "headline": "Self-test headline", "badge": "Test offer", "style": style, "color": "#c8f169"}
+    return assemble("selftest", req, cfg, work, clips, logo)
 
 
 class Runner:
@@ -587,6 +649,17 @@ def make_handler(cfg: Config, store: Store, runner: Runner):
             if not self._authorized():
                 return None
             path = urllib.parse.urlsplit(self.path).path
+            if path == "/selftest":
+                style = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("style", ["bold"])[0]
+                if style not in effects.STYLES:
+                    return self._json(HTTPStatus.BAD_REQUEST, {"error": "Unknown effects style."})
+                tmp = Path(tempfile.mkdtemp(prefix="selftest-", dir=cfg.data if cfg.data.is_dir() else None))
+                try:
+                    return self._json(HTTPStatus.OK, {"ok": True, "report": selftest(cfg, tmp / "work", style)})
+                except JobError as e:
+                    return self._json(HTTPStatus.UNPROCESSABLE_ENTITY, {"ok": False, "error": str(e)})
+                finally:
+                    shutil.rmtree(tmp, ignore_errors=True)
             if path not in ("/jobs", "/render"):
                 return self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
             length = int(self.headers.get("Content-Length") or 0)

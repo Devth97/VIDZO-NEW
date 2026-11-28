@@ -19,11 +19,14 @@ import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import effects  # noqa: E402
 import worker as w  # noqa: E402
 
 TOKEN = "t" * 40
 FFMPEG = os.environ.get("FFMPEG") or shutil.which("ffmpeg")
 FFPROBE = os.environ.get("FFPROBE") or shutil.which("ffprobe")
+HYPERFRAMES = os.environ.get("MEDIA_WORKER_HYPERFRAMES") or shutil.which("hyperframes")
+GSAP = os.environ.get("MEDIA_WORKER_GSAP")
 
 
 def config(root: Path, **kw) -> w.Config:
@@ -112,6 +115,61 @@ class ArgumentTests(unittest.TestCase):
 
     def test_filter_escape(self):
         self.assertEqual(w.filter_escape("C:\\a'b,[c]"), "C\\:/a\\'b\\,\\[c\\]")
+
+
+class EffectsTests(unittest.TestCase):
+    overlay = {"headline": "Mornings, sorted", "badge": "20% off", "cta": "Shop the bottle", "color": "#c8f169"}
+
+    def test_timing_keeps_hook_first_cta_last_and_drops_a_badge_without_room(self):
+        t = effects.plan(12.0, True)
+        self.assertEqual((t["hook"], t["cta_start"], t["cta"]), (2.8, 9.0, 3.0))
+        self.assertTrue(t["hook"] < t["badge_start"] and t["badge_start"] + t["badge"] <= t["cta_start"])
+        self.assertNotIn("badge_start", effects.plan(4.0, True))
+
+    def test_text_colour_contrasts_with_the_brand(self):
+        self.assertEqual(effects.ink_for("#c8f169"), "#111111")
+        self.assertEqual(effects.ink_for("#25291f"), "#ffffff")
+
+    def test_customer_text_only_travels_as_variables(self):
+        root = Path(tempfile.mkdtemp())
+        try:
+            gsap = root / "gsap.min.js"
+            gsap.write_text("/* gsap */")
+            hostile = {**self.overlay, "headline": "<script>alert(1)</script>", "cta": "Buy'\"</div>"}
+            effects.write_project(root / "fx", "bold", hostile, 12.0, gsap)
+            page = (root / "fx" / "index.html").read_text("utf-8")
+            self.assertNotIn("alert(1)", page)
+            self.assertNotIn("Buy'", page)
+            self.assertIn('data-var-text="headline"', page)
+            self.assertIn('<script src="assets/gsap.min.js">', page)  # no CDN at render time
+            values = json.loads((root / "fx" / "variables.json").read_text("utf-8"))
+            self.assertEqual(values["headline"], "<script>alert(1)</script>")
+            self.assertEqual(values["ink"], "#111111")
+            self.assertTrue((root / "fx" / "assets" / "gsap.min.js").is_file())
+            args = effects.render_args("hyperframes", root / "fx", root / "fx.webm")
+            self.assertIn("--strict-variables", args)
+            self.assertEqual(args[args.index("--format") + 1], "webm")
+            self.assertEqual(effects.render_env()["HYPERFRAMES_NO_TELEMETRY"], "1")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_style_validation(self):
+        limits = w.Limits()
+        self.assertEqual(w.validate_request(request(overlay={**self.overlay, "style": "bold"}), limits)["style"], "bold")
+        self.assertEqual(w.validate_request(request(), limits)["style"], "none")
+        for bad in ({**self.overlay, "style": "glitter"}, {**self.overlay, "style": "bold", "headline": ""},
+                    {**self.overlay, "badge": "x" * 25}, {**self.overlay, "headline": "x" * 41}):
+            with self.subTest(bad=bad), self.assertRaises(w.JobError):
+                w.validate_request(request(overlay=bad), limits)
+
+    def test_effects_layer_sits_under_the_logo_and_replaces_the_drawn_cta(self):
+        args = w.build_ffmpeg_args(config(Path(".")), [Path("/w/clip0.mp4")], [5.0], Path("/w/out.mp4"), Path("/w/logo.img"), None, "#000000", Path("/w/fx.webm"))
+        fx = args.index(str(Path("/w/fx.webm")))
+        self.assertEqual(args[fx - 2:fx], ["libvpx-vp9", "-i"])
+        graph = args[args.index("-filter_complex") + 1]
+        self.assertLess(graph.index("[fx]overlay"), graph.index("[logo]overlay"))
+        self.assertNotIn("drawtext", graph)
+        self.assertIn("3:a", args)  # clip, effects, logo, then the generated silence
 
 
 class StoreAndHttpTests(unittest.TestCase):
@@ -239,6 +297,34 @@ class RenderTests(unittest.TestCase):
             self.assertTrue(result["report"]["upscaled"])
             self.assertTrue((store.dir(job["id"]) / "result.mp4").is_file())
             self.assertFalse((store.dir(job["id"]) / "work").exists())  # inputs deleted after rendering
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+
+def crop_gray(path: Path, at: float) -> bytes:
+    """The hook card's area of one decoded frame, as 8-bit grey pixels."""
+    return subprocess.run([FFMPEG, "-v", "error", "-ss", str(at), "-i", str(path), "-frames:v", "1", "-vf", "crop=900:220:90:320,format=gray",
+                           "-f", "rawvideo", "-"], capture_output=True, check=True).stdout
+
+
+@unittest.skipUnless(FFMPEG and FFPROBE and find_font() and HYPERFRAMES and GSAP, "ffmpeg, ffprobe, a font, hyperframes and MEDIA_WORKER_GSAP are needed")
+class EffectsRenderTests(unittest.TestCase):
+    def test_selftest_renders_the_bold_layer_over_the_footage(self):
+        root = Path(tempfile.mkdtemp())
+        try:
+            cfg = config(root, font=find_font(), hyperframes=HYPERFRAMES, gsap=GSAP)
+            plain = w.selftest(cfg, root / "plain" / "work", "none")
+            plain_frame = crop_gray(root / "plain" / "result.mp4", 1.0)
+            bold = w.selftest(cfg, root / "bold" / "work", "bold")
+            bold_frame = crop_gray(root / "bold" / "result.mp4", 1.0)
+            for report in (plain, bold):
+                out = report["output"]
+                self.assertEqual((out["width"], out["height"], out["fps"], out["videoCodec"], out["audioCodec"]), (1080, 1920, "30/1", "h264", "aac"))
+                self.assertAlmostEqual(out["seconds"], 5.0, delta=w.DURATION_TOLERANCE)
+            self.assertEqual(bold["overlay"]["effects"], "bold")
+            # The hook card covers this area at 1 s only when the effects layer is on.
+            diff = sum(abs(a - b) for a, b in zip(plain_frame, bold_frame)) / len(plain_frame)
+            self.assertGreater(diff, 20, "the effects layer did not change the hook area")
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

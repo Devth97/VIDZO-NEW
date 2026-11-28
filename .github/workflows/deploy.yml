@@ -52,7 +52,13 @@ jobs:
         run: |
           sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends ffmpeg fonts-dejavu-core
           ffmpeg -version | head -1
+          npm install -g --no-fund --no-audit hyperframes@0.9.43 gsap@3.15.1
+          hyperframes browser ensure
+          export MEDIA_WORKER_GSAP="$(npm root -g)/gsap/dist/gsap.min.js"
           python3 -m unittest discover -s services/media-worker/tests -v
+        env:
+          HYPERFRAMES_NO_TELEMETRY: '1'
+          DO_NOT_TRACK: '1'
 
   deploy:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
