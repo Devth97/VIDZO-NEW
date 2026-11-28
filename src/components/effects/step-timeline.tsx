@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { Pause, Play, ScanLine, Layers3, Film, Clapperboard, Check, FileVideo } from 'lucide-react';
+import { Pause, Play, ScanLine, Layers3, Film, Check, FileVideo, Flag } from 'lucide-react';
 import { useInView, useReducedMotion } from './use-motion';
+import { PixelDinosaur, FinishFlag } from './pixel-dinosaur';
 
 /** Status reflects what works today: drafting and storyboards are live; video generation opens with live services. */
 const steps = [
@@ -25,31 +26,42 @@ export function StepTimeline() {
   const visible = useInView(root, '0px');
   const [elapsed, setElapsed] = useState(0);
   const [playing, setPlaying] = useState(true);
+  const [pageVisible, setPageVisible] = useState(true);
   const active = Math.min(steps.length - 1, Math.floor(elapsed / STEP_MS));
 
   useEffect(() => {
     if (reduce) setPlaying(false);
   }, [reduce]);
   useEffect(() => {
-    if (!playing || !visible) return;
+    const sync = () => setPageVisible(!document.hidden);
+    sync();
+    document.addEventListener('visibilitychange', sync);
+    return () => document.removeEventListener('visibilitychange', sync);
+  }, []);
+  useEffect(() => {
+    if (!playing || !visible || !pageVisible) return;
     let raf = 0, last = performance.now();
     const tick = (now: number) => {
-      setElapsed(e => (e + (now - last)) % TOTAL);
-      last = now; raf = requestAnimationFrame(tick);
+      const delta = now - last;
+      last = now;
+      setElapsed(e => (e + delta) % TOTAL);
+      raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playing, visible]);
+  }, [playing, visible, pageVisible]);
 
   const pct = (elapsed / TOTAL) * 100;
-  return <div ref={root} className="step-timeline">
+  return <div ref={root} className="step-timeline dino-timeline" data-running={playing && visible && pageVisible}>
+    <p className="timeline-demo-label">A quick walk through the studio <span>Illustrative walkthrough · Not job progress</span></p>
     <div className="timeline-bar">
       <button type="button" className="timeline-play" onClick={() => setPlaying(!playing)} aria-label={playing ? 'Pause the walkthrough' : 'Play the walkthrough'}>{playing ? <Pause size={16}/> : <Play size={16}/>}</button>
       <div className="timeline-track">
-        <span className="timeline-fill" style={{ inlineSize: pct + '%' }}/>
-        <span className="timeline-rider" style={{ insetInlineStart: pct + '%' }} aria-hidden="true"><Clapperboard size={16} strokeWidth={1.75}/></span>
+        <span className="timeline-fill" style={{ transform: `scaleX(${pct / 100})` }}/>
+        <span className="timeline-rider" style={{ transform: `translateX(${pct}%)` }} aria-hidden="true"><PixelDinosaur/></span>
         {steps.map((s, i) => <button type="button" key={s.short} className={'timeline-mark' + (i <= active ? ' is-past' : '')} style={{ insetInlineStart: (i / steps.length) * 100 + '%' }}
-          aria-label={`Show step ${i + 1}: ${s.short}`} aria-pressed={i === active} onClick={() => { setElapsed(i * STEP_MS + 1); setPlaying(false); }}><span>0{i + 1}</span></button>)}
+          aria-label={`Show step ${i + 1}: ${s.short}`} aria-pressed={i === active} onClick={() => { setElapsed(i * STEP_MS + 1); setPlaying(false); }}><span>0{i + 1}</span><Flag size={17} aria-hidden="true"/></button>)}
+        <span className="timeline-finish" aria-hidden="true"><FinishFlag/></span>
       </div>
       <span className="timeline-clock" aria-hidden="true">{clock(elapsed)} / {clock(TOTAL)}</span>
     </div>

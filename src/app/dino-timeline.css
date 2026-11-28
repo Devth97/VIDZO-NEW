@@ -1,0 +1,32 @@
+.dino-timeline .timeline-demo-label { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 20px; margin: 0 0 8px; font-size: 12px; font-weight: 500; color: #4c573d; }
+.dino-timeline .timeline-demo-label span { font-size: 10px; font-weight: 400; color: #77796b; }
+.dino-timeline .timeline-bar { padding-block: 50px 30px; }
+.dino-timeline .timeline-track { block-size: 2px; margin-inline: 22px; border-radius: 0; background: #d1d4c6; }
+.dino-timeline .timeline-track::after { content: ''; position: absolute; inset: 8px 0 auto; height: 2px; background: repeating-linear-gradient(to right, #bec4af 0 3px, transparent 3px 17px); }
+.dino-timeline .timeline-fill { inline-size: 100%; transform-origin: left center; background: #627b3e; border-radius: 0; box-shadow: 0 0 12px #88a45b40; }
+.dino-timeline .timeline-rider { inset: auto auto 0 0; inline-size: 100%; block-size: 40px; translate: none; pointer-events: none; z-index: 2; color: #263c25; }
+.pixel-dinosaur { display: block; transform: translateX(-50%); overflow: visible; }
+.dino-eye { fill: var(--canvas, #f7f5f0); }
+.dino-legs-b { opacity: 0; }
+.dino-timeline .timeline-mark { inset-block-start: -22px; translate: -50% 0; z-index: 3; }
+.dino-timeline .timeline-mark span { position: absolute; inset: auto auto 64px 50%; translate: -50% 0; inline-size: auto; block-size: auto; border: 0; border-radius: 0; background: transparent; font-size: 10px; color: #7f8574; }
+.dino-timeline .timeline-mark > svg { position: absolute; inset: auto auto 22px 50%; translate: -50% 0; color: #8c9480; }
+.dino-timeline .timeline-mark.is-past span { color: #405d31; border: 0; }
+.dino-timeline .timeline-mark.is-past > svg { color: #627b3e; opacity: .3; }
+.dino-timeline .timeline-mark[aria-pressed=true] span { background: transparent; color: #405d31; font-weight: 700; }
+.dino-timeline .timeline-mark:focus-visible { outline: 2px solid #5c7340; outline-offset: 4px; border-radius: 4px; }
+.timeline-finish { position: absolute; inset: auto -10px 0 auto; color: #566346; }
+.dino-timeline .timeline-clock { min-inline-size: 108px; font-size: 12px; }
+@media (prefers-reduced-motion: no-preference) {
+  .dino-body { animation: dino-bob .28s steps(2, end) infinite; }
+  .dino-legs-a { animation: dino-stride .28s steps(1, end) infinite; }
+  .dino-legs-b { animation: dino-stride .28s steps(1, end) infinite reverse; }
+  .dino-timeline[data-running=false] .dino-body, .dino-timeline[data-running=false] .dino-legs { animation-play-state: paused; }
+}
+@keyframes dino-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
+@keyframes dino-stride { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@media (max-width: 600px) {
+  .dino-timeline .timeline-track { margin-inline: 18px; }
+  .dino-timeline .timeline-demo-label { display: block; }
+  .dino-timeline .timeline-demo-label span { display: block; margin-top: 6px; }
+}
