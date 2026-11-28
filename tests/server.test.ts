@@ -7,6 +7,8 @@ process.env.VIDZO_MODE = 'local';
 process.env.VIDZO_POLL_MS = '0';
 
 const { createPgliteDb, setTestDb } = await import('@/lib/server/db');
+const { createPgTestDb } = await import('./support/pg');
+const pgUrl = process.env.VIDZO_TEST_PG_URL; // set in CI: the same suite then runs on real PostgreSQL
 const { memoryStorage, setTestStorage, objectKey } = await import('@/lib/server/storage');
 const { setTestProviders } = await import('@/lib/server/providers');
 const { simulatedProvider } = await import('@/lib/server/providers/simulated');
@@ -74,7 +76,7 @@ async function readyProject(ctx: Ctx) {
   return p;
 }
 
-beforeAll(async () => { db = await createPgliteDb(); setTestDb(db); setTestStorage(storage); await db.query(`update public.admin_settings set value = jsonb_set(value, '{dailySpendCapInr}', '1000000') where key = 'limits'`); });
+beforeAll(async () => { db = pgUrl ? await createPgTestDb(pgUrl) : await createPgliteDb(); setTestDb(db); setTestStorage(storage); await db.query(`update public.admin_settings set value = jsonb_set(value, '{dailySpendCapInr}', '1000000') where key = 'limits'`); });
 afterAll(async () => { setTestDb(undefined); setTestStorage(undefined); await db.close?.(); });
 beforeEach(() => setTestProviders({ generation: simulatedProvider({ delayMs: 0 }), assembly: simulatedProvider({ delayMs: 0 }) }));
 
@@ -372,5 +374,68 @@ describe('durable runner (cron sweep)', () => {
     const [stopped] = await db.query<{ status: string; needs_attention: boolean }>('select status, needs_attention from public.jobs where id = $1', [j.id]);
     expect(stopped).toMatchObject({ status: 'failed', needs_attention: false });
     expect(await repo.loadWallet(db, ctx.workspaceId)).toMatchObject({ held: 0, available: 100 });
+  });
+});
+
+// Separate backends contending for the same rows. PGlite has one connection, so these need real PostgreSQL.
+describe.runIf(pgUrl)('real PostgreSQL concurrency', () => {
+  const reserve = (ws: string, op: string, amount: number) => db.query(`select public.wallet_reserve($1, $2, $3, null)`, [ws, op, amount]);
+  const settled = <T,>(ps: Promise<T>[]) => Promise.allSettled(ps);
+
+  it('parallel holds can never overspend a wallet', async () => {
+    const ctx = await user('race-hold@example.test');
+    await credit(ctx, 'starter'); // 100 credits
+    const results = await settled(Array.from({ length: 20 }, (_, i) => reserve(ctx.workspaceId, `race:${i}`, 10)));
+    expect(results.filter(r => r.status === 'fulfilled')).toHaveLength(10);
+    expect(results.filter(r => r.status === 'rejected').every(r => /insufficient_credits/.test(String((r as PromiseRejectedResult).reason)))).toBe(true);
+    expect(await repo.loadWallet(db, ctx.workspaceId)).toMatchObject({ available: 0, held: 100 });
+  });
+
+  it('the same hold sent from many connections is recorded once', async () => {
+    const ctx = await user('race-same@example.test');
+    await credit(ctx, 'starter');
+    await settled(Array.from({ length: 10 }, () => reserve(ctx.workspaceId, 'job:same', 30)));
+    expect(await db.query("select 1 from public.ledger_entries where operation_id = 'job:same'")).toHaveLength(1);
+    expect(await repo.loadWallet(db, ctx.workspaceId)).toMatchObject({ available: 70, held: 30 });
+    // Repeated, concurrent settlement settles once; a different amount for a finished operation is refused.
+    await settled(Array.from({ length: 6 }, () => db.query(`select public.wallet_finalize($1, 'job:same', 20)`, [ctx.workspaceId])));
+    expect(await repo.loadWallet(db, ctx.workspaceId)).toMatchObject({ available: 80, held: 0, spent: 20 });
+    await expect(db.query(`select public.wallet_finalize($1, 'job:same', 25)`, [ctx.workspaceId])).rejects.toThrow(/operation_conflict/);
+  });
+
+  it('duplicate and re-delivered capture webhooks credit a payment once', async () => {
+    const ctx = await user('race-pay@example.test');
+    const order = await payments.createOrder(db, ctx, 'starter');
+    const [pay] = await db.query<{ amount_paise: number }>('select amount_paise from public.payments where order_id = $1', [order.orderId]);
+    const body = JSON.stringify({ event: 'payment.captured', payload: { payment: { entity: { id: 'pay_race_1', order_id: order.orderId, amount: pay.amount_paise, currency: 'INR', status: 'captured' } } } });
+    const sig = payments.signWebhook(body, payments.localWebhookSecret());
+    // Same event delivered in parallel, plus the same capture under new event ids (provider retries).
+    await settled([...Array.from({ length: 6 }, () => payments.handleRazorpayWebhook(body, sig, 'evt_race_1')), ...Array.from({ length: 4 }, (_, i) => payments.handleRazorpayWebhook(body, sig, `evt_race_retry_${i}`))]);
+    expect(await repo.loadWallet(db, ctx.workspaceId)).toMatchObject({ available: 100 });
+    expect(await db.query("select 1 from public.ledger_entries where kind = 'purchase' and workspace_id = $1", [ctx.workspaceId])).toHaveLength(1);
+  });
+
+  it('one quote submitted in parallel becomes one job with one hold', async () => {
+    const ctx = await user('race-job@example.test');
+    await credit(ctx, 'starter');
+    const p = await readyProject(ctx);
+    const q = await jobs.createServerQuote(db, ctx, { projectId: p.id, tier: 'professional', scope: 'frame' });
+    const results = await settled(Array.from({ length: 8 }, (_, i) => jobs.createJob(ctx, { quoteId: q.id, idempotencyKey: i % 2 ? q.id : `${q.id}-other` })));
+    const ids = new Set(results.filter(r => r.status === 'fulfilled').map(r => (r as PromiseFulfilledResult<{ id: string }>).value.id));
+    expect(ids.size).toBe(1);
+    expect(await db.query('select 1 from public.jobs where quote_id = $1', [q.id])).toHaveLength(1);
+    expect((await repo.loadWallet(db, ctx.workspaceId)).held).toBe(q.credits);
+  });
+
+  it('parallel jobs on different projects respect the per-user limit', async () => {
+    const base = await user('race-cap@example.test');
+    const ctx = { ...base, isAdmin: true }; // admins skip the one-free-analysis-a-day rule, so three projects can be prepared
+    await credit(ctx, 'studio');
+    const projects = [await readyProject(ctx), await readyProject(ctx), await readyProject(ctx)];
+    const quotes = await Promise.all(projects.map(p => jobs.createServerQuote(db, ctx, { projectId: p.id, tier: 'professional', scope: 'frame' })));
+    const results = await settled(quotes.map(q => jobs.createJob(ctx, { quoteId: q.id, idempotencyKey: q.id })));
+    expect(results.filter(r => r.status === 'fulfilled')).toHaveLength(2); // perUserConcurrency defaults to 2
+    const [{ n }] = await db.query<{ n: string }>("select count(*) n from public.jobs where user_id = $1 and kind <> 'analysis' and status in ('queued', 'submitted', 'running')", [ctx.userId]);
+    expect(Number(n)).toBe(2);
   });
 });

@@ -66,6 +66,9 @@ function providerTasks(p: Project, quote: Quote): (QuoteTask & { provider: Provi
 }
 
 async function assertCapacity(q: Queryable, ctx: Ctx, credits: number, providerNames: string[]) {
+  // Count-then-insert is only safe if job creations cannot interleave: without this, parallel requests could all
+  // pass the per-user and daily caps. Held for the (short) job-creation transaction only.
+  await q.query("select pg_advisory_xact_lock(hashtext('vidzo:job-capacity'))");
   const lim = await limits(q);
   if (lim.generationPaused) throw new HttpError(503, 'Generation is paused by the VIDZO team. No credits were reserved.', 'paused');
   const [{ n }] = await q.query<{ n: string }>("select count(*) n from public.jobs where user_id = $1 and status in ('queued', 'submitted', 'running') and kind <> 'analysis'", [ctx.userId]);

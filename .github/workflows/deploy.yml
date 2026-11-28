@@ -18,6 +18,14 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: ci-only-password
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa
@@ -30,6 +38,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test
+      - name: Server suite on real PostgreSQL (concurrency and RLS)
+        run: pnpm vitest run tests/server.test.ts
+        env:
+          VIDZO_TEST_PG_URL: postgres://postgres:ci-only-password@localhost:5432/postgres
       - run: pnpm audit --prod --audit-level=moderate
       - name: Verify Next.js build
         run: pnpm build
