@@ -30,7 +30,7 @@ export function IdeaComposer() {
     <form className="idea-composer" onSubmit={submit} aria-labelledby={id + '-label'} aria-busy={busy}>
       <span className="border-beam" aria-hidden="true"/>
       <label id={id + '-label'} htmlFor={id + '-idea'}>Describe your ad</label>
-      <textarea id={id + '-idea'} name="direction" ref={input} rows={3} maxLength={2000} value={idea} onChange={e => setIdea(e.target.value)} placeholder="What’s the idea? A product reveal, a different cast, a fresh take on a reference…" aria-describedby={id + '-help'}/>
+      <textarea id={id + '-idea'} name="direction" ref={input} rows={2} maxLength={2000} value={idea} onChange={e => setIdea(e.target.value)} placeholder="What’s the idea? A product reveal, a different cast, a fresh take on a reference…" aria-describedby={id + '-help'}/>
       <div className="idea-details" id={id + '-details'} hidden={!details}>
         <div><label htmlFor={id + '-brand'}>Brand name</label><input id={id + '-brand'} name="brand" maxLength={100} value={brand} onChange={e => setBrand(e.target.value)} autoComplete="organization"/></div>
         <div><label htmlFor={id + '-product'}>Product</label><input id={id + '-product'} name="product" maxLength={200} value={product} onChange={e => setProduct(e.target.value)}/></div>

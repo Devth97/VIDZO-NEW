@@ -1,0 +1,150 @@
+/* Public marketing surfaces share a quieter paper-and-olive finish.
+   Keep these tokens scoped so the private studio retains its own interface. */
+.public-frame {
+  --canvas: #f8f6ef;
+  --surface: #fffefa;
+  --surface-soft: #eeece2;
+  --border: #ddded2;
+  --editorial-line: #ddded2;
+  --muted: #626659;
+  --lime: #dce6c4;
+  --lime-soft: #eef2e5;
+  --peach: #f6f0e5;
+  --lavender: #f1efea;
+  --sage: #edf1e4;
+  --raise: none;
+  --raise-hover: 0 5px 16px #29332112;
+  --paper-shadow: 0 14px 40px #2933210a;
+  background: var(--canvas);
+}
+.public-frame .public-header-bar,
+.public-frame .public-header-bar.is-scrolled { background: var(--canvas); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.public-frame .public-header { padding-block: 20px; }
+.public-frame .public-header-bar.is-scrolled .public-header { padding-block: 16px; }
+.public-frame .public-header nav a { font-size: .875rem; }
+.public-frame .public-header nav > a { display: inline-flex; align-items: center; min-block-size: 44px; }
+.public-frame .button { font-size: .875rem; font-weight: 550; border-width: 1px; box-shadow: none; }
+.public-frame .button.primary,
+.public-frame .public-header nav .button.primary { color: #fffefa; background: #435638; border-color: #435638; box-shadow: none; }
+.public-frame .button.primary:hover:not(:disabled),
+.public-frame .public-header nav .button.primary:hover { color: #fffefa; background: #35472c; border-color: #35472c; box-shadow: none; transform: none; }
+.public-frame .button.secondary { border-color: #c4cab8; background: var(--surface); box-shadow: none; }
+.public-frame .button.secondary:hover:not(:disabled) { background: #edf1e5; border-color: #879678; box-shadow: none; transform: none; }
+.public-frame .shimmer::after { content: none; animation: none; }
+.public-frame .border-beam { display: none; animation: none; }
+
+.public-frame .creative-entry { padding-block: 44px 44px; }
+.public-frame .entry-kicker { margin-block-end: 20px; }
+.public-frame .entry-kicker > span { background: transparent; border-color: #d5dacb; font-size: .75rem; padding: 6px 12px; }
+.public-frame .entry-heading h1 { font-size: clamp(2.4rem, 1.8rem + 2.3vw, 3.8rem); line-height: 1.08; margin-block-end: 20px; text-wrap: balance; }
+.public-frame .entry-heading h1 em { background: none; padding-inline: 0; color: #536843; }
+.public-frame .entry-heading > p:last-child { font-size: 1rem; line-height: 1.65; margin-block-end: 26px; }
+.public-frame .idea-composer-wrap { max-inline-size: 760px; }
+.public-frame .idea-composer { padding: 22px; border: 1px solid #c8cebc; border-radius: 22px; background: var(--surface); box-shadow: var(--paper-shadow); }
+.public-frame .idea-composer:focus-within { border-color: #7f936d; box-shadow: 0 0 0 3px #dce6c480, var(--paper-shadow); }
+.public-frame .idea-composer > label { font-size: .8125rem; margin-block-end: 14px; }
+.public-frame .idea-composer > textarea { min-block-size: 84px; font-size: 1.0625rem; line-height: 1.6; }
+.public-frame .idea-toolbar { border-block-start: 1px solid #eeeee5; padding-block-start: 14px; }
+.public-frame .idea-product, .public-frame .idea-goal { background: #f6f7ef; border-color: #dce0d2; font-size: .8125rem; }
+.public-frame .idea-submit { background: #435638; color: #fffefa; border: 1px solid #435638; box-shadow: none; min-block-size: 46px; padding-inline: 20px; }
+.public-frame .idea-submit:hover:not(:disabled) { background: #35472c; border-color: #35472c; box-shadow: none; transform: none; }
+.public-frame .idea-help { background: transparent; margin-block: 12px 10px; font-size: .75rem; }
+.public-frame .idea-chips { column-gap: 18px; row-gap: 8px; margin-block-end: 14px; }
+.public-frame .idea-chips li { border: 0; padding: 4px 0; background: transparent; font-size: .75rem; font-weight: 400; }
+.public-frame .idea-chips svg { background: #e7edda; color: #435638; }
+.public-frame .idea-starters { background: transparent; padding-inline: 0; column-gap: 16px; row-gap: 4px; }
+.public-frame .idea-starters > button { font-size: .75rem; border-color: #d3d9c7; }
+.public-frame .entry-projects { background: transparent; }
+.public-frame .video-showcase { margin-block-start: 24px; }
+.public-frame .video-showcase-footer p { font-size: .75rem; color: #626659; }
+.public-frame .video-showcase-footer .video-showcase-kicker { font-size: 1rem; }
+.public-frame .video-showcase-label { font-size: .8125rem; }
+.public-frame .feature-ticker:focus-visible { outline: 2px solid #536843; outline-offset: 4px; }
+.public-frame .feature-ticker:focus-within .ticker-track { animation-play-state: paused; }
+
+.public-frame .workspace-home .editorial-section { padding-block: 64px; }
+.public-frame .playful-head { gap: 14px 48px; margin-block-end: 32px; }
+.public-frame .workspace-home .editorial-section h2 { font-size: clamp(1.75rem, 1.3rem + 1.5vw, 2.5rem); line-height: 1.13; letter-spacing: -.035em; text-wrap: balance; }
+.public-frame .playful-head > p:not(.eyebrow) { max-inline-size: 55ch; font-size: .9375rem; }
+.public-frame .editorial-home .eyebrow { font-size: .75rem; color: #5e6d50; font-weight: 550; }
+.public-frame .format-tabs { padding: 4px; border-color: #d9dece; background: transparent; }
+.public-frame .format-tabs button { min-block-size: 44px; }
+.public-frame .format-tab-pill { background: #e7eddb; border: 1px solid #c6d1b8; }
+.public-frame .format-card { padding: 16px; border-color: #ddded2; border-radius: 20px; gap: 18px; }
+.public-frame .format-card:hover { border-color: #aab99a; box-shadow: 0 8px 24px #29332108; transform: none; }
+.public-frame .format-use { border: 1px solid #d0d7c4; box-shadow: none; padding-inline: 12px; }
+.public-frame .format-use:hover { background: #e9efdf; box-shadow: none; transform: none; }
+.public-frame .spotlight-card { background: var(--surface); border-color: #ddded2; border-radius: 20px; padding: 28px; }
+.public-frame .spotlight-card:hover { box-shadow: 0 8px 24px #29332108; border-color: #aab99a; transform: none; }
+.public-frame .spotlight-card::before { background: none; }
+.public-frame .spotlight-card h3 { font-size: 1.1875rem; }
+.public-frame .spotlight-card p { line-height: 1.75; }
+.public-frame .step-cards li { border-color: #ddded2; background: #f7f3e9; padding: 28px; gap: 14px; }
+.public-frame .step-cards li:nth-child(2) { background: #f2f1eb; border-color: #ddded2; }
+.public-frame .step-cards li:nth-child(3) { background: #edf1e5; border-color: #d4ddc9; }
+.public-frame .step-cards li.is-active { border-color: #849970; box-shadow: 0 8px 24px #2933210a; transform: none; }
+.public-frame .step-no { background: var(--surface); color: #4c653b; border: 1px solid #ccd6bd; }
+.public-frame .status-pill { background: #eef3e6; color: #4a6237; border-color: #cbd8b9; }
+.public-frame .status-pill.is-planned { background: #f3f0e9; color: #6a6254; border-color: #d9d3c6; }
+.public-frame .timeline-play { background: #e4ecd6; border: 1px solid #b8c6a5; box-shadow: none; }
+.public-frame .dino-timeline .timeline-demo-label span { color: #626b55; font-size: .6875rem; }
+.public-frame .dino-timeline .timeline-mark span { color: #626b55; font-size: .6875rem; }
+.public-frame .price-preview-card { background: #f0f3e8; border: 1px solid #cbd6bd; box-shadow: none; border-radius: 24px; padding: 36px; }
+.public-frame .preview-price { font-size: clamp(2.75rem, 2.2rem + 1.2vw, 3.5rem); }
+.public-frame .price-preview-card > p:not(.preview-price) { font-size: .8125rem; }
+.public-frame .price-preview-card hr { border-color: #d4ddc6; }
+.public-frame .editorial-faq summary { padding-block: 22px; line-height: 1.5; }
+.public-frame .editorial-faq details p { font-size: .875rem; }
+.public-frame .workspace-home .editorial-final { background: #edf1e4; border: 1px solid #cdd8bf; box-shadow: none; padding: 40px; margin-block: 32px 56px; border-radius: 24px; }
+.public-frame .editorial-final .grid-pattern { opacity: .22; }
+.public-frame .editorial-final > div > p:last-child { margin-block-end: 0; font-size: .875rem; }
+.public-frame .public-footer { padding-block: 36px; }
+
+/* Raise the small text in the product walkthrough without changing its behavior. */
+.public-frame .workflow-demo-header strong { font-size: 1rem; }
+.public-frame .workflow-demo-message > p { font-size: 1rem; }
+.public-frame .workflow-demo-reference strong { font-size: .75rem; }
+.public-frame .workflow-demo-reference span { font-size: .6875rem; color: #5d6252; }
+.public-frame .workflow-demo-step :is(h3, p) { font-size: .875rem; }
+.public-frame .workflow-demo-breakdown dd { font-size: .8125rem; }
+.public-frame .workflow-demo-breakdown dt { font-size: .6875rem; color: #656b59; }
+.public-frame .workflow-demo-plan dd { color: #636957; }
+.public-frame .workflow-demo-panel-heading h3 { font-size: .9375rem; }
+.public-frame .workflow-demo-videos strong { font-size: .875rem; }
+.public-frame .workflow-demo-videos figcaption span { font-size: .75rem; }
+.public-frame :is(.workflow-demo-disclosure, .workflow-demo-approval small, .workflow-demo-plan > small) { font-size: .6875rem; }
+
+@media (max-width: 1100px) {
+  .public-frame .public-header nav { gap: 16px; }
+  .public-frame .public-header nav a { font-size: .8125rem; }
+  .public-frame .spotlight-card { padding: 22px; }
+}
+@media (max-width: 767px) {
+  .public-frame .public-header, .public-frame .public-header-bar.is-scrolled .public-header { padding-block: 14px; }
+  .public-frame .creative-entry { padding-block: 28px 36px; }
+  .public-frame .entry-kicker { margin-block-end: 18px; }
+  .public-frame .entry-heading h1 { font-size: clamp(2rem, 1.5rem + 2.3vw, 2.5rem); margin-block-end: 18px; }
+  .public-frame .entry-heading > p:last-child { font-size: .9375rem; margin-block-end: 24px; }
+  .public-frame .idea-composer { padding: 18px; border-radius: 18px; }
+  .public-frame .idea-composer > textarea { font-size: 1rem; min-block-size: 96px; }
+  .public-frame .idea-submit { min-block-size: 48px; }
+  .public-frame .idea-help { font-size: .6875rem; padding-inline: 0; }
+  .public-frame .idea-chips { column-gap: 14px; margin-block-end: 12px; }
+  .public-frame .idea-chips li { font-size: .6875rem; gap: 5px; }
+  .public-frame .idea-starters { justify-content: center; }
+  .public-frame .idea-starters > span { text-align: center; }
+  .public-frame .video-showcase { margin-block-start: 22px; }
+  .public-frame .workspace-home .editorial-section { padding-block: 40px; }
+  .public-frame .playful-head { gap: 12px; margin-block-end: 24px; }
+  .public-frame .playful-head > p:not(.eyebrow) { font-size: .875rem; }
+  .public-frame .format-tabs { border-radius: 14px; inline-size: 100%; }
+  .public-frame .format-tabs button { flex: 1 1 auto; padding-inline: 12px; }
+  .public-frame .format-tab-pill { border-radius: 10px; }
+  .public-frame .format-card { padding: 14px; grid-template-columns: 88px minmax(0, 1fr); gap: 14px; }
+  .public-frame .step-cards li { padding: 24px; }
+  .public-frame .price-preview-card { padding: 26px; }
+  .public-frame .preview-price span { display: block; margin: 8px 0 0; }
+  .public-frame .workspace-home .editorial-final { padding: 28px 24px; gap: 24px; margin-block: 24px 40px; }
+  .public-frame .editorial-final .button { inline-size: 100%; }
+  .public-frame .workflow-demo-videos figcaption span { font-size: .6875rem; }
+}

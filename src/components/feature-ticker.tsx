@@ -15,5 +15,5 @@ const items = [
 
 export function FeatureTicker() {
   const row = (copy?: boolean) => <ul className="ticker-row" aria-hidden={copy || undefined}>{items.map(({ Icon, label }) => <li key={label}><Icon size={16}/>{label}</li>)}</ul>;
-  return <section className="feature-ticker" aria-label="What the studio does"><div className="ticker-track">{row()}{row(true)}</div></section>;
+  return <section className="feature-ticker" aria-label="What the studio does" tabIndex={0}><div className="ticker-track">{row()}{row(true)}</div></section>;
 }

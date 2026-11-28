@@ -40,7 +40,7 @@ export function FormatLibrary() {
       {tab === value && <motion.span layoutId="format-tab" className="format-tab-pill" transition={{ type: 'spring', stiffness: 420, damping: 34 }}/>}<span className="relative">{label}</span>
     </button>)}</div>
     <motion.div layout className="format-grid"><AnimatePresence mode="popLayout" initial={false}>{shown.map(f => <motion.article layout key={f.name} className="format-card"
-      initial={{ opacity: 0, scale: .96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: .96 }} transition={{ duration: .25 }}>
+      initial={false} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: .96 }} transition={{ duration: .25 }}>
       <div className={'format-thumb tone-' + f.tone} aria-hidden="true"><Shot shot={f.shot}/><Overlay kind={f.overlay}/><span className="reel-slate">9:16</span></div>
       <div className="format-body">
         <h3>{f.name}</h3><p>{f.job}</p>
