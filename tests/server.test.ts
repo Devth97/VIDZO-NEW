@@ -358,6 +358,33 @@ describe('durable runner (cron sweep)', () => {
     expect(await repo.loadWallet(db, ctx.workspaceId)).toMatchObject({ held: 0, spent: 0, available: 100 });
   });
 
+  it('runs synchronous provider calls only from the runner, and retries interruptions and transient errors', async () => {
+    const ctx = await user('sync@example.test');
+    await credit(ctx, 'starter');
+    const p = await readyProject(ctx);
+    const sim = simulatedProvider({ delayMs: 0 });
+    const failures: InstanceType<typeof ProviderError>[] = [new ProviderError('transient', 'Worker busy.')];
+    const calls: string[] = [];
+    setTestProviders({ generation: { ...sim, run: async (task, _inputs, key) => { calls.push(key); const e = failures.shift(); if (e) throw e; return sim.result('sim_0_x', task); } } });
+    const j = await frameJob(ctx, p.id, p.scenes[0].id);
+    await jobs.advanceJob(j.id); // a request-time caller must not start a minutes-long call
+    expect(calls).toHaveLength(0);
+    await jobs.sweepJobs();
+    const [first] = await db.query<{ id: string; status: string; tries: number }>('select id, status, tries from public.attempts where job_id = $1', [j.id]);
+    expect(first).toMatchObject({ status: 'pending', tries: 1 }); // transient: retried after a back-off
+    // Simulate the runner dying mid-call on the retry: the next sweep runs it again instead of reconciling.
+    await db.query("update public.attempts set status = 'submitting', tries = 2, next_at = now() where id = $1", [first.id]);
+    expect(await sweepUntilDone(j.id)).toBe('succeeded');
+    expect(calls).toHaveLength(2);
+    expect(await db.query("select 1 from public.assets where job_id = $1 and kind = 'frame'", [j.id])).toHaveLength(1);
+    // A permanent failure (bad input) is not retried and releases the credits.
+    failures.push(new ProviderError('permanent', 'Every clip must be an MP4 or MOV file.'));
+    const j2 = await frameJob(ctx, p.id, p.scenes[1].id);
+    expect(await sweepUntilDone(j2.id)).toBe('failed');
+    expect((await repo.loadWallet(db, ctx.workspaceId)).held).toBe(0);
+    await db.query("update public.attempts set updated_at = now() - interval '1 hour' where job_id = $1", [j2.id]); // keep the circuit breaker closed for later tests
+  });
+
   it('flags a job that runs past an hour, keeps it running, and lets an admin stop the rest', async () => {
     const ctx = await user('stuck@example.test');
     await credit(ctx, 'starter');

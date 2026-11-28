@@ -55,3 +55,25 @@ describe('media worker adapter', () => {
     expect(await p.reconcile('job-2:export', task)).toBeNull();
   });
 });
+
+describe('media worker adapter, synchronous mode', () => {
+  const urls = { urls: { a: 'https://r2/a', b: 'https://r2/b', logo: 'https://r2/logo' } };
+  it('only offers run() when configured for a request-billed host', () => {
+    expect(workerProvider(cfg).run).toBeUndefined();
+    expect(workerProvider({ ...cfg, sync: true }).run).toBeTypeOf('function');
+  });
+  it('returns the rendered file with its report, and classifies failures', async () => {
+    const report = { output: { width: 1080, height: 1920 } };
+    let next: () => Response = () => new Response(new Uint8Array([7, 8]), { status: 200, headers: { 'x-vidzo-report': btoa(JSON.stringify(report)) } });
+    const { calls, fetchImpl } = fakeWorker({ '/render': () => next() });
+    const run = workerProvider({ ...cfg, sync: true }, fetchImpl).run!;
+    const file = await run(task, urls, 'job-1:export');
+    expect([...file.bytes]).toEqual([7, 8]);
+    expect(file.meta).toEqual({ assembly: report });
+    expect(JSON.parse(String(calls[0].init?.body)).idempotencyKey).toBe('job-1:export');
+    next = () => json({ error: 'Every clip must be an MP4 or MOV file.' }, 422);
+    await expect(run(task, urls, 'job-1:export')).rejects.toMatchObject({ kind: 'permanent', message: 'Every clip must be an MP4 or MOV file.' });
+    next = () => json({ error: 'busy' }, 503);
+    await expect(run(task, urls, 'job-1:export')).rejects.toMatchObject({ kind: 'transient' });
+  });
+});

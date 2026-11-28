@@ -2,6 +2,9 @@
 
 Standard library only, plus the ffmpeg and ffprobe binaries. Runs as one small container:
 
+  POST /render                    same body -> the MP4 itself, rendered inside the request (report in the
+                                  X-Vidzo-Report header, base64 JSON). For hosts that only give CPU during a
+                                  request (Cloud Run request-based billing); nothing is kept afterwards.
   POST /jobs                      {idempotencyKey, clips[], logo?, overlay, target} -> {id, state}
   GET  /jobs?idempotencyKey=...   -> {id, state}  (reconciliation; 404 when unknown)
   GET  /jobs/<id>                 -> {id, state, error?, report?}
@@ -20,7 +23,9 @@ import json
 import os
 import queue
 import re
+import base64
 import shutil
+import tempfile
 import subprocess
 import sys
 import threading
@@ -549,10 +554,29 @@ def make_handler(cfg: Config, store: Store, runner: Runner):
                     return self._send_file(store.dir(job["id"]) / "result.mp4")
             return self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
 
-        def _send_file(self, path: Path) -> None:
+        def _render_now(self, request: dict) -> None:
+            tmp = Path(tempfile.mkdtemp(prefix="render-", dir=cfg.data if cfg.data.is_dir() else None))
+            try:
+                report = render({"id": "sync", "request": request}, cfg, tmp / "work")
+            except JobError as e:
+                shutil.rmtree(tmp, ignore_errors=True)
+                return self._json(HTTPStatus.UNPROCESSABLE_ENTITY, {"error": str(e)})
+            except Exception as e:  # unexpected: fail closed without leaking details
+                shutil.rmtree(tmp, ignore_errors=True)
+                print(f"[media-worker] unexpected render error: {e!r}", file=sys.stderr)
+                return self._json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": "Assembly failed unexpectedly."})
+            try:
+                header = base64.b64encode(json.dumps(report).encode()).decode()
+                self._send_file(tmp / "result.mp4", {"X-Vidzo-Report": header})
+            finally:
+                shutil.rmtree(tmp, ignore_errors=True)
+
+        def _send_file(self, path: Path, extra: dict | None = None) -> None:
             size = path.stat().st_size
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", "video/mp4")
+            for k, v in (extra or {}).items():
+                self.send_header(k, v)
             self.send_header("Content-Length", str(size))
             self.send_header("Cache-Control", "no-store")
             self.end_headers()
@@ -562,7 +586,8 @@ def make_handler(cfg: Config, store: Store, runner: Runner):
         def do_POST(self):  # noqa: N802 - http.server API
             if not self._authorized():
                 return None
-            if urllib.parse.urlsplit(self.path).path != "/jobs":
+            path = urllib.parse.urlsplit(self.path).path
+            if path not in ("/jobs", "/render"):
                 return self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
             length = int(self.headers.get("Content-Length") or 0)
             if not 0 < length <= cfg.limits.max_body_bytes:
@@ -573,6 +598,8 @@ def make_handler(cfg: Config, store: Store, runner: Runner):
                     check_url(u, cfg)
             except (JobError, ValueError) as e:
                 return self._json(HTTPStatus.BAD_REQUEST, {"error": str(e) if isinstance(e, JobError) else "Invalid JSON."})
+            if path == "/render":
+                return self._render_now(request)
             job, created = store.create(request)
             if created:
                 runner.submit(job["id"])

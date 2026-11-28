@@ -7,7 +7,7 @@ import { mode, pricing } from './config';
 import { getDb, type Queryable } from './db';
 import { domain, HttpError } from './errors';
 import { analyzer, providerFor } from './providers';
-import { ProviderError, type ProviderTask } from './providers/types';
+import { ProviderError, type ProviderAdapter, type ProviderFile, type ProviderTask } from './providers/types';
 import { finalizeCredits, loadProject, reserveCredits, writeProjectFacts } from './repo';
 import { storeOutput } from './assets';
 import { getStorage } from './storage';
@@ -158,7 +158,11 @@ async function renewLease(jobId: string, token: string): Promise<string | null> 
   return r?.lease_token ?? null;
 }
 
-export async function advanceJob(jobId: string): Promise<void> {
+/**
+ * allowLong: only the background runner may make synchronous provider calls (minutes long). Request-time
+ * callers leave those steps for the next sweep, because a request's background time is cut after ~30 s.
+ */
+export async function advanceJob(jobId: string, { allowLong = false }: { allowLong?: boolean } = {}): Promise<void> {
   const db = await getDb();
   const [job] = await db.query<JobRow>(`update public.jobs set ${LEASE} where id = $1 and status in ('queued', 'submitted', 'running') and (lease_until is null or lease_until < now()) returning *, lease_until::text as lease_token`, [jobId]);
   if (!job) return;
@@ -167,9 +171,13 @@ export async function advanceJob(jobId: string): Promise<void> {
     const attempts = await db.query<AttemptRow>('select * from public.attempts where job_id = $1 order by created_at, task_id', [jobId]);
     for (const a of attempts) {
       if (terminal(a.status) || new Date(a.next_at).getTime() > Date.now()) continue;
+      const long = isLong(job, a);
+      if (long && !allowLong) continue;
       token = await renewLease(jobId, token);
       if (!token) return; // lease lost: another runner owns the job now
-      await step(job, a);
+      // A long call keeps renewing the lease so no other runner takes the job mid-render.
+      const beat = long ? setInterval(() => { if (token) void renewLease(jobId, token).then(t => { if (t) token = t; }).catch(() => undefined); }, 30_000) : undefined;
+      try { await step(job, a); } finally { clearInterval(beat); }
     }
     await settleIfDone(job);
   } finally {
@@ -192,7 +200,7 @@ export async function sweepJobs({ maxJobs = 10, budgetMs = 20_000 }: { maxJobs?:
   let advanced = 0, errors = 0;
   for (const { id } of due) {
     if (Date.now() - started > budgetMs) break;
-    try { await advanceJob(id); advanced++; } catch (e) { errors++; console.error('[vidzo] sweep: advance failed', id, e instanceof Error ? e.message.slice(0, 200) : e); }
+    try { await advanceJob(id, { allowLong: true }); advanced++; } catch (e) { errors++; console.error('[vidzo] sweep: advance failed', id, e instanceof Error ? e.message.slice(0, 200) : e); }
   }
   const [{ active, attention }] = await db.query<{ active: string; attention: string }>("select count(*) active, count(*) filter (where needs_attention) attention from public.jobs where status in ('queued', 'submitted', 'running')");
   const beat = { at: new Date().toISOString(), due: due.length, advanced, errors, active: Number(active), attention: Number(attention), ms: Date.now() - started };
@@ -227,10 +235,56 @@ async function setAttempt(id: string, patch: Partial<{ status: string; request_i
     [id, patch.status ?? null, patch.request_id ?? null, patch.error ?? null, patch.tries ?? null, String(patch.next_in_ms ?? 0), patch.output_asset_id ?? null]);
 }
 
+type JobTask = QuoteTask & { provider: ProviderTask };
+const taskOf = (job: JobRow, a: AttemptRow): JobTask => job.input.tasks!.find(t => t.taskId === a.task_id)!;
+function isLong(job: JobRow, a: AttemptRow) {
+  if (job.kind === 'analysis') return false;
+  try { return Boolean(providerFor(taskOf(job, a).kind).run); } catch { return false; }
+}
+
+async function signedInputs(job: JobRow, task: JobTask) {
+  const storage = await getStorage(), db = await getDb();
+  const keys = await db.query<{ id: string; object_key: string; mime: string }>("select id, object_key, mime from public.assets where id = any($1::uuid[]) and workspace_id = $2 and status = 'verified'", [[...task.provider.inputAssetIds, task.provider.overlay?.logoAssetId].filter(Boolean), job.workspace_id]);
+  const urls: Record<string, string> = {};
+  for (const k of keys) urls[k.id] = await storage.signGet(k.object_key, { ttlSeconds: 3600, mime: k.mime });
+  return { urls };
+}
+
+/** Stores a result at most once, even if a lapsed lease let two runners finish the same item. */
+async function storeResult(job: JobRow, task: JobTask, a: AttemptRow, file: ProviderFile) {
+  await (await getDb()).tx(async q => {
+    const [locked] = await q.query<{ status: string }>('select status from public.attempts where id = $1 for update', [a.id]);
+    if (terminal(locked.status)) return;
+    const [{ n }] = await q.query<{ n: string }>("select count(*) n from public.assets where project_id = $1 and kind = $2 and coalesce(scene_id, '') = coalesce($3, '') and coalesce(candidate_id, '') = coalesce($4, '')", [job.project_id, task.kind, task.sceneId ?? null, task.candidateId ?? null]);
+    const outputId = await storeOutput(q, job.workspace_id, { id: job.project_id }, { kind: task.kind, name: file.name, mime: file.mime, bytes: file.bytes, placeholder: file.placeholder, sceneId: task.sceneId, candidateId: task.candidateId, depHash: task.depHash, version: Number(n) + 1, jobId: job.id, meta: file.meta });
+    await q.query("update public.attempts set status = 'succeeded', output_asset_id = $2, error = null, updated_at = now() where id = $1", [a.id, outputId]);
+  });
+}
+
+/** Synchronous providers: the whole item happens in one call and redoing it is safe, so interruptions retry. */
+async function stepRun(job: JobRow, a: AttemptRow, task: JobTask, run: NonNullable<ProviderAdapter['run']>) {
+  if (a.status === 'submitting' || a.status === 'unknown') {
+    // The runner died mid-call. Nothing external was charged, so retry within the normal limit.
+    await setAttempt(a.id, a.tries < MAX_TRIES ? { status: 'pending', error: 'The previous run was interrupted; running it again.' } : { status: 'failed', error: 'Assembly was interrupted repeatedly.' });
+    return;
+  }
+  if (a.status !== 'pending') return;
+  await setAttempt(a.id, { status: 'submitting', tries: a.tries + 1, error: null });
+  await (await getDb()).query("update public.jobs set status = 'running', stage = 'Assembling your ad', updated_at = now() where id = $1 and status in ('queued', 'submitted')", [job.id]);
+  try {
+    await storeResult(job, task, a, await run(task.provider, await signedInputs(job, task), a.idempotency_key));
+  } catch (e) {
+    const pe = e instanceof ProviderError ? e : new ProviderError('transient', e instanceof Error ? e.message.slice(0, 200) : 'Assembly failed.');
+    if (pe.kind !== 'permanent' && a.tries + 1 < MAX_TRIES) await setAttempt(a.id, { status: 'pending', error: pe.message, next_in_ms: 30_000 * 2 ** a.tries });
+    else await setAttempt(a.id, { status: 'failed', error: pe.message });
+  }
+}
+
 async function step(job: JobRow, a: AttemptRow) {
   if (job.kind === 'analysis') return stepAnalysis(job, a);
-  const task = job.input.tasks!.find(t => t.taskId === a.task_id)!;
+  const task = taskOf(job, a);
   const provider = providerFor(task.kind);
+  if (provider.run) return stepRun(job, a, task, provider.run);
   try {
     if (a.status === 'submitting') { await setAttempt(a.id, { status: 'unknown', error: 'Submission was interrupted; reconciling before any resubmission.' }); return; }
     if (a.status === 'unknown') {
@@ -241,12 +295,9 @@ async function step(job: JobRow, a: AttemptRow) {
     }
     if (a.status === 'pending') {
       await setAttempt(a.id, { status: 'submitting', tries: a.tries + 1, error: null });
-      const storage = await getStorage(), db = await getDb();
-      const keys = await db.query<{ id: string; object_key: string; mime: string }>('select id, object_key, mime from public.assets where id = any($1::uuid[]) and workspace_id = $2 and status = \'verified\'', [[...task.provider.inputAssetIds, task.provider.overlay?.logoAssetId].filter(Boolean), job.workspace_id]);
-      const urls: Record<string, string> = {};
-      for (const k of keys) urls[k.id] = await storage.signGet(k.object_key, { ttlSeconds: 3600, mime: k.mime });
+      const inputs = await signedInputs(job, task);
       try {
-        const { requestId } = await provider.submit(task.provider, { urls }, a.idempotency_key);
+        const { requestId } = await provider.submit(task.provider, inputs, a.idempotency_key);
         await setAttempt(a.id, { status: 'submitted', request_id: requestId, next_in_ms: POLL_MS });
         await (await getDb()).query("update public.jobs set status = 'submitted', stage = 'Submitted to the production queue', updated_at = now() where id = $1 and status = 'queued'", [job.id]);
       } catch (e) {
@@ -265,16 +316,7 @@ async function step(job: JobRow, a: AttemptRow) {
       return;
     }
     if (st.state === 'failed') { await setAttempt(a.id, { status: 'failed', error: st.error ?? 'Generation failed.' }); return; }
-    const file = await provider.result(a.request_id!, task.provider);
-    const db = await getDb();
-    // Store a result at most once, even if a lapsed lease let two runners poll the same completed request.
-    await db.tx(async q => {
-      const [locked] = await q.query<{ status: string }>('select status from public.attempts where id = $1 for update', [a.id]);
-      if (terminal(locked.status)) return;
-      const [{ n }] = await q.query<{ n: string }>('select count(*) n from public.assets where project_id = $1 and kind = $2 and coalesce(scene_id, \'\') = coalesce($3, \'\') and coalesce(candidate_id, \'\') = coalesce($4, \'\')', [job.project_id, task.kind, task.sceneId ?? null, task.candidateId ?? null]);
-      const outputId = await storeOutput(q, job.workspace_id, { id: job.project_id }, { kind: task.kind, name: file.name, mime: file.mime, bytes: file.bytes, placeholder: file.placeholder, sceneId: task.sceneId, candidateId: task.candidateId, depHash: task.depHash, version: Number(n) + 1, jobId: job.id, meta: file.meta });
-      await q.query("update public.attempts set status = 'succeeded', output_asset_id = $2, error = null, updated_at = now() where id = $1", [a.id, outputId]);
-    });
+    await storeResult(job, task, a, await provider.result(a.request_id!, task.provider));
   } catch (e) {
     // Status/result polling problems are not proof of failure: back off and try again later.
     const msg = e instanceof Error ? e.message.slice(0, 200) : 'Polling failed.';

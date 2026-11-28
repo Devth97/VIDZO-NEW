@@ -175,6 +175,15 @@ class StoreAndHttpTests(unittest.TestCase):
         self.assertIsNone(self.store.by_key("old-done-1"))
         self.assertIsNotNone(self.store.by_key("resume-me-1"))
 
+    def test_synchronous_render_validates_first_and_reports_failures_safely(self):
+        status, body = self.call("/render", request(target={"width": 720, "height": 1280, "fps": 30}))
+        self.assertEqual(status, 400)
+        status, body = self.call("/render", request())  # the host does not resolve
+        self.assertEqual(status, 422)
+        self.assertNotIn("example.test", body["error"])
+        self.assertEqual(self.submitted, [])  # nothing queued, nothing stored
+        self.assertEqual(self.store.all(), [])
+
     def test_a_failure_reports_a_safe_message(self):
         job, _ = self.store.create(w.validate_request(request(), self.cfg.limits))
         result = w.Runner(self.cfg, self.store).process(job["id"])  # the host does not resolve
@@ -207,8 +216,22 @@ class RenderTests(unittest.TestCase):
             store = w.Store(cfg.data)
             job, _ = store.create(w.validate_request(request(clips=[f"{base}/c0.mp4", f"{base}/c1.mp4"], logo=f"{base}/logo.png"), cfg.limits))
             result = w.Runner(cfg, store).process(job["id"])
+            # The synchronous endpoint returns the same deliverable in the response body.
+            api = http.server.ThreadingHTTPServer(("127.0.0.1", 0), w.make_handler(cfg, store, w.Runner(cfg, store)))
+            threading.Thread(target=api.serve_forever, daemon=True).start()
+            body = json.dumps(request(idempotencyKey="sync-render-1", clips=[f"{base}/c0.mp4"])).encode()
+            req = urllib.request.Request(f"http://127.0.0.1:{api.server_address[1]}/render", data=body, method="POST",
+                                         headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=300) as res:
+                mp4 = res.read()
+                sync_report = json.loads(__import__("base64").b64decode(res.headers["X-Vidzo-Report"]))
+            api.shutdown()
+            api.server_close()
             server.shutdown()
             server.server_close()
+            self.assertEqual(mp4[4:8], b"ftyp")
+            self.assertEqual(sync_report["output"]["height"], 1920)
+            self.assertAlmostEqual(sync_report["output"]["seconds"], 2.0, delta=w.DURATION_TOLERANCE)
             self.assertEqual(result["state"], "completed", result.get("error"))
             out = result["report"]["output"]
             self.assertEqual((out["width"], out["height"], out["fps"], out["videoCodec"], out["audioCodec"]), (1080, 1920, "30/1", "h264", "aac"))

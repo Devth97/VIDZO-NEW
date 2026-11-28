@@ -38,6 +38,12 @@ export interface ProviderAdapter {
   /** Finds a submission made with this idempotency key, if the provider supports lookup. */
   reconcile(idempotencyKey: string, task: ProviderTask): Promise<string | null>;
   cancel?(requestId: string, task: ProviderTask): Promise<void>;
+  /**
+   * Synchronous providers (our own media worker on a request-billed host) do the whole item inside one call.
+   * Only for work that is safe to redo: an interrupted run is retried, never reconciled. Runs only from the
+   * background runner, which may hold a call for minutes; never from a user's request.
+   */
+  run?(task: ProviderTask, inputs: ProviderInputs, idempotencyKey: string): Promise<ProviderFile>;
 }
 
 /** Maps HTTP/network outcomes to retry semantics. `sent` is true once the request body may have reached the provider. */

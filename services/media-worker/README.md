@@ -67,4 +67,29 @@ Debian and Ubuntu build `ffmpeg` with `--enable-gpl` and link libx264 (GPL-2.0-o
 
 ## Hosting
 
-Heavy encoding does not belong in a Cloudflare Worker request. Any small Linux container host with HTTPS works: Cloudflare Containers, Fly.io, Railway or a VPS. Give it at least 2 vCPU, 4 GB RAM and a few GB of disk. The host is still to be chosen, together with a monthly cost cap.
+Heavy encoding does not belong in a Cloudflare Worker request. Two ways to run the container:
+
+- **Request-billed hosts, such as Google Cloud Run's free tier: use `POST /render`.**
+  - CPU is only available while a request is open, so the app holds the request for the whole render (`MEDIA_WORKER_MODE=sync` in the app).
+  - The app runs these calls only from its one-minute background runner, which can wait up to 15 minutes.
+  - Nothing is kept on the instance, and an interrupted render is simply run again.
+- **Always-on containers, such as Cloudflare Containers, Fly.io or a VPS: use the async `POST /jobs` API.** This is the app's default mode.
+
+### Google Cloud Run (free tier)
+
+Use these settings: `--cpu 2 --memory 4Gi --concurrency 1 --timeout 900 --max-instances 2 --min-instances 0`, request-based billing, and no CPU boost.
+
+At about 100 two-minute renders a month this stays inside the free allowance of 180k vCPU-seconds and 360k GiB-seconds. Free-tier figures come from search results; confirm them in the console, and set a budget alert.
+
+1. Create a project in the Google Cloud console. Enable billing (needed even for the free tier) and enable the Cloud Run and Cloud Build APIs.
+2. Store the shared token in Secret Manager (6 secret versions are free) with `gcloud secrets create media-worker-token --data-file=-` and paste a value of at least 32 random characters.
+3. Deploy from this folder:
+   ```bash
+   gcloud run deploy vidzo-media-worker --source services/media-worker --region asia-south1      --cpu 2 --memory 4Gi --concurrency 1 --timeout 900 --max-instances 2 --min-instances 0      --no-cpu-boost --allow-unauthenticated      --set-env-vars MEDIA_WORKER_INPUT_HOSTS=vidzo-media.<account-id>.r2.cloudflarestorage.com,MEDIA_WORKER_DATA=/tmp      --set-secrets MEDIA_WORKER_TOKEN=media-worker-token:latest
+   ```
+   `--allow-unauthenticated` only opens the HTTPS endpoint; every route except `/health` still requires the bearer token.
+4. Give the app `MEDIA_WORKER_URL` (the service URL), `MEDIA_WORKER_TOKEN` (the same secret), and `MEDIA_WORKER_MODE=sync`.
+
+### Other hosts
+
+Any Linux container host with HTTPS works. Give it at least 2 vCPU, 4 GB RAM and a few GB of disk.

@@ -52,7 +52,8 @@ export const live = {
     const keyId = env('RAZORPAY_KEY_ID'), keySecret = env('RAZORPAY_KEY_SECRET'), webhookSecret = env('RAZORPAY_WEBHOOK_SECRET');
     return keyId && keySecret && webhookSecret ? { keyId, keySecret, webhookSecret } : undefined;
   },
-  worker: () => { const url = env('MEDIA_WORKER_URL'), token = env('MEDIA_WORKER_TOKEN'); return url && token ? { url, token } : undefined; },
+  // MEDIA_WORKER_MODE=sync for hosts that only give CPU during a request (Cloud Run request-based billing).
+  worker: () => { const url = env('MEDIA_WORKER_URL'), token = env('MEDIA_WORKER_TOKEN'); return url && token ? { url, token, sync: env('MEDIA_WORKER_MODE') === 'sync' } : undefined; },
   appOrigin: () => env('APP_ORIGIN'),
 };
 
