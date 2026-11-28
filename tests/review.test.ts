@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  approveScene, buildScenePrompt, clipDepHash, createQuote, currentFrame, fidelityNotes, quoteProblem, sceneDepHash, sceneState,
+  approveScene, buildScenePrompt, clipDepHash, createQuote, currentFrame, effectsOf, exportDepHash, fidelityNotes, quoteProblem, sceneDepHash, sceneState,
   updateScene, upscaleDisclosure,
 } from '@/lib/domain/project';
 import { mergeClientEdits } from '@/lib/domain/merge';
@@ -65,6 +65,19 @@ describe('scene review fields', () => {
 });
 
 describe('quote clarity', () => {
+  it('motion graphics re-quote only the final assembly, and the bold style needs a headline', () => {
+    let p = ready();
+    p = { ...p, assets: [...p.assets, ...p.scenes.map(s => asset('clip', { sceneId: s.id, depHash: clipDepHash(p, s)! }))] };
+    const bold: Project = { ...p, brief: { ...p.brief, effects: { style: 'bold', headline: '', badge: '20% off' } } };
+    expect(bold.scenes.map(s => clipDepHash(bold, s))).toEqual(p.scenes.map(s => clipDepHash(p, s))); // clips stay current
+    expect(exportDepHash(bold)).not.toBe(exportDepHash(p));
+    expect(() => createQuote(bold, 'professional', 'export', undefined, pricing)).toThrow(/hook headline/);
+    const ready2: Project = { ...bold, brief: { ...bold.brief, effects: { ...bold.brief.effects, headline: '  Mornings, sorted ' } } };
+    expect(createQuote(ready2, 'professional', 'export', undefined, pricing).tasks).toHaveLength(1);
+    expect(effectsOf(ready2.brief)).toEqual({ style: 'bold', headline: 'Mornings, sorted', badge: '20% off' });
+    expect(effectsOf(p.brief).style).toBe('none');
+  });
+
   it('blocks final assembly while the on-screen call to action is too long', () => {
     let p = ready();
     p = { ...p, assets: [...p.assets, ...p.scenes.map(s => asset('clip', { sceneId: s.id, depHash: clipDepHash(p, s)! }))] };

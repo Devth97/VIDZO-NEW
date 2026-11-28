@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Users, Check, ImagePlus, FileImage, ShieldCheck, History } from 'lucide-react';
 import { useWorkspace } from '../workspace-provider';
 import { ErrorMessage } from '../ui';
-import { currentSheet, fidelityLabels, logoAsset, productAssets, referenceLimits, selectCandidate, sheetHistory } from '@/lib/domain/project';
+import { currentSheet, effectsOf, fidelityLabels, logoAsset, productAssets, referenceLimits, selectCandidate, sheetHistory } from '@/lib/domain/project';
 import type { Brief } from '@/lib/domain/schema';
 import { PrivateMedia, type StepProps } from './shared';
 
@@ -72,6 +72,13 @@ export function BrandStep({ project: p, actions }: StepProps) {
       {rejected.length > 0 && <p className="small-text muted">{rejected.length} file{rejected.length > 1 ? 's were' : ' was'} rejected during verification and will not be used.</p>}
       {!p.sample && (!products.length || !logo) && <p className="notice warning">Add at least one product photo and your logo before the storyboard.</p>}
       <div className="field-grid" style={{ marginTop: 24 }}><div className="field"><label htmlFor="brand-color">Brand colour</label><input id="brand-color" type="color" value={p.brief.color} onChange={e => field('color', e.target.value)}/></div><div className="field"><label htmlFor="brand-font">Optional font preference</label><input id="brand-font" value={p.brief.font} maxLength={100} placeholder="e.g. Inter" onChange={e => field('font', e.target.value)}/></div></div>
+    </section>
+    <section className="panel" style={{ marginTop: 24 }} aria-labelledby="effects-title"><h3 id="effects-title">Motion graphics</h3><p className="muted small-text" style={{ margin: '8px 0 24px' }}>Added at final assembly, over your approved clips and under your exact logo, in your brand colour and inside the area social apps never cover. Changing these only re-quotes the final assembly.</p>
+      <div className="field"><label htmlFor="effects-style">Style</label><select id="effects-style" value={effectsOf(p.brief).style} onChange={e => actions.change({ ...p, brief: { ...p.brief, effects: { ...p.brief.effects, style: e.target.value as 'none' | 'bold' } } })}><option value="none">None: logo and CTA only</option><option value="bold">Bold: headline, badge, CTA card</option></select></div>
+      {effectsOf(p.brief).style !== 'none' && <div className="field-grid">
+        <div className="field"><label htmlFor="effects-headline">Hook headline (first seconds, up to 40 characters)</label><input id="effects-headline" value={p.brief.effects?.headline ?? ''} maxLength={40} placeholder="e.g. Mornings, sorted" onChange={e => actions.change({ ...p, brief: { ...p.brief, effects: { ...p.brief.effects, headline: e.target.value } } })}/></div>
+        <div className="field"><label htmlFor="effects-badge">Offer badge (optional, up to 24 characters)</label><input id="effects-badge" value={p.brief.effects?.badge ?? ''} maxLength={24} placeholder="e.g. 20% off this week" onChange={e => actions.change({ ...p, brief: { ...p.brief, effects: { ...p.brief.effects, badge: e.target.value } } })}/></div>
+      </div>}
     </section>
     <section className="panel" style={{ marginTop: 24 }} aria-labelledby="fidelity-title"><h3 id="fidelity-title">What must stay exact</h3><p className="muted small-text" style={{ margin: '8px 0 24px' }}>Sent with every frame and clip request, and listed beside each frame when you approve it. Models cannot guarantee a perfect match, so these notes are your review checklist too.</p>
       {(Object.keys(fidelityLabels) as (keyof typeof fidelityLabels)[]).map(k => <div className="field" key={k}><label htmlFor={'fidelity-' + k}>{fidelityLabels[k]} (optional)</label><textarea id={'fidelity-' + k} rows={2} value={p.brief.fidelity?.[k] ?? ''} maxLength={k === 'prohibited' ? 1000 : 500} placeholder={fidelityHints[k]} onChange={e => actions.change({ ...p, brief: { ...p.brief, fidelity: { ...p.brief.fidelity, [k]: e.target.value } } })}/></div>)}

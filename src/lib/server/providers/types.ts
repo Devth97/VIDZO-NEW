@@ -13,7 +13,7 @@ export type ProviderTask = {
   /** Asset ids whose signed URLs are passed as image/video inputs. */
   inputAssetIds: string[];
   /** Export only: overlay instructions for deterministic assembly. */
-  overlay?: { brand: string; cta: string; font: string; color: string; logoAssetId?: string };
+  overlay?: { brand: string; cta: string; font: string; color: string; logoAssetId?: string; style?: string; headline?: string; badge?: string };
 };
 
 export type ProviderInputs = { urls: Record<string, string> };

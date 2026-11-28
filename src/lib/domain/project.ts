@@ -157,7 +157,7 @@ export function toggleLock(p: Project, id: string): Project {
 // ---------------------------------------------------------------------------------------------
 
 export const visualBriefKeys = ['brand', 'product', 'color', 'tone', 'differences'] as const satisfies readonly (keyof Brief)[];
-export const overlayBriefKeys = ['brand', 'cta', 'font', 'offer', 'claims', 'language'] as const satisfies readonly (keyof Brief)[];
+export const overlayBriefKeys = ['brand', 'cta', 'font', 'offer', 'claims', 'language', 'color', 'effects'] as const satisfies readonly (keyof Brief)[];
 
 const pick = <K extends keyof Brief>(b: Brief, keys: readonly K[]) => Object.fromEntries(keys.map(k => [k, b[k]]));
 
@@ -303,6 +303,8 @@ export function quoteTasks(p: Project, tier: Tier, scope: QuoteScope, targetId: 
       const h = exportDepHash(p);
       if (!h) throw new Error('Every scene needs a current, reviewed clip before final assembly.');
       if (p.brief.cta.trim().length > ctaMaxOnScreen) throw new Error(`Shorten the call to action to ${ctaMaxOnScreen} characters or fewer so it fits on screen.`);
+      const fx = effectsOf(p.brief);
+      if (fx.style !== 'none' && !(fx.headline && p.brief.cta.trim())) throw new Error('The motion-graphics style needs a hook headline and a call to action.');
       return [{ taskId: id(), kind: 'export', depHash: h, credits: pricing.export }];
     }
   }
@@ -324,6 +326,11 @@ export function createQuote(p: Project, tier: Tier, scope: QuoteScope, targetId:
     pricingVersion: pricing.version, retryPolicy, illustrative: pricing.illustrative,
     fingerprint: quoteFingerprint(p, tier, scope, targetId, pricing, tasks),
   };
+}
+
+/** Effects settings with defaults; 'none' keeps the plain logo + CTA overlay. */
+export function effectsOf(b: Brief) {
+  return { style: b.effects?.style ?? 'none', headline: b.effects?.headline?.trim() ?? '', badge: b.effects?.badge?.trim() ?? '' };
 }
 
 /** The CTA is drawn on a 1080 px wide frame; longer text would not stay legible (the media worker enforces it too). */

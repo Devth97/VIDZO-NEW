@@ -74,12 +74,17 @@ export const sceneSchema = z.object({
 });
 export type Scene = z.infer<typeof sceneSchema>;
 
+export const effectStyles = ['none', 'bold'] as const;
+export type EffectStyle = (typeof effectStyles)[number];
+
 export const briefSchema = z.object({
   brand: z.string().max(100), product: z.string().max(200), color: z.string().regex(/^#[0-9a-fA-F]{6}$/), font: z.string().max(100),
   objective: z.string().max(500), audience: z.string().max(1000), language: z.string().max(80), tone: z.string().max(200),
   cta: z.string().max(200), offer: z.string().max(500), claims: z.string().max(2000), differences: z.string().max(2000),
   /** What must stay exact about the product. Sent with every frame/clip request and listed beside frames for review. */
   fidelity: z.object({ shape: z.string().max(500), colour: z.string().max(500), packaging: z.string().max(500), prohibited: z.string().max(1000) }).partial().optional(),
+  /** Motion-graphics layer added at final assembly. Absent or 'none' keeps the plain logo + CTA overlay. */
+  effects: z.object({ style: z.enum(effectStyles), headline: z.string().max(40), badge: z.string().max(24) }).partial().optional(),
 });
 export type Brief = z.infer<typeof briefSchema>;
 

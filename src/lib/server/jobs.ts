@@ -1,6 +1,6 @@
 import 'server-only';
 import { z } from 'zod';
-import { assertQuote, buildScenePrompt, createQuote, currentClip, logoAsset, productAssets, currentSheet, referenceAsset, setRoles } from '@/lib/domain/project';
+import { assertQuote, buildScenePrompt, createQuote, currentClip, effectsOf, logoAsset, productAssets, currentSheet, referenceAsset, setRoles } from '@/lib/domain/project';
 import { quoteScopes, type JobView, type Project, type Quote, type QuoteTask, type Tier } from '@/lib/domain/schema';
 import type { Ctx } from './auth';
 import { mode, pricing } from './config';
@@ -59,7 +59,7 @@ function providerTasks(p: Project, quote: Quote): (QuoteTask & { provider: Provi
       return { ...t, provider: { ...base, label: c.name, prompt: `Original character identity sheet on a plain warm background: ${c.description}. Four consistent views of the same adult: front, profile, three-quarter, full body. No resemblance to any real or famous person. No text.`, inputAssetIds: [] } };
     }
     if (t.kind === 'export') {
-      return { ...t, provider: { ...base, label: p.name, prompt: '', inputAssetIds: p.scenes.map(s => currentClip(p, s)!.id), overlay: { brand: p.brief.brand, cta: p.brief.cta, font: p.brief.font, color: p.brief.color, logoAssetId: logoAsset(p)?.id } } };
+      return { ...t, provider: { ...base, label: p.name, prompt: '', inputAssetIds: p.scenes.map(s => currentClip(p, s)!.id), overlay: { brand: p.brief.brand, cta: p.brief.cta, font: p.brief.font, color: p.brief.color, logoAssetId: logoAsset(p)?.id, ...effectsOf(p.brief) } } };
     }
     throw new HttpError(409, 'The project changed. Request a new quote.', 'changed');
   });
