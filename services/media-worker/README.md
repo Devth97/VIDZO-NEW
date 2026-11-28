@@ -33,7 +33,8 @@ All routes except `/health` need `Authorization: Bearer $MEDIA_WORKER_TOKEN`.
 - **Inputs:** fetched only over HTTPS from hosts in `MEDIA_WORKER_INPUT_HOSTS` (the R2 endpoint host). The fetch refuses redirects, credentials, non-443 ports and bodies above the size caps.
 - **Tool isolation:** FFmpeg and ffprobe get argument arrays, never a shell. They run with `-protocol_whitelist file`, so they cannot open network URLs themselves.
 - **Input caps:** at most 12 clips, each 0.5 to 20 s and 200 MB or less, with 90 s total. Logo images are at most 10 MB and 4096 px on a side.
-- **Process limits on Linux:** a 15-minute wall-clock timeout per render, a CPU-time limit, a 3 GB address-space limit, a 500 MB output-file limit and lowered priority. FFmpeg runs with 2 threads.
+- **Process limits on Linux:** a 15-minute wall-clock timeout per render, a CPU-time limit, a 500 MB output-file limit, lowered priority, and 2 encoder and 2 filter threads.
+- **Memory:** real RAM is bounded by the container's memory limit; set it to 4 GB. The 16 GB address-space limit only stops a runaway process, because FFmpeg reserves far more virtual memory than it uses.
 - **Concurrency:** one job at a time per container. Scale by adding containers, not threads.
 - **Persistence and retention:**
   - Jobs persist under `MEDIA_WORKER_DATA`, and a restart resumes queued or interrupted jobs from scratch.

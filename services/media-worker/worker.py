@@ -49,7 +49,9 @@ class Limits:
     fetch_timeout: int = 60
     render_timeout: int = 900
     ffmpeg_threads: int = 2
-    memory_bytes: int = 3 * 1024**3
+    # Address-space guard against a runaway process only. FFmpeg reserves far more virtual memory than it uses
+    # (per-thread arenas and stacks), so real RAM is bounded by the container's memory limit instead.
+    address_space_bytes: int = 16 * 1024**3
     output_bytes: int = 500_000_000
     retention_seconds: int = 24 * 3600
     max_body_bytes: int = 64_000
@@ -179,7 +181,7 @@ def _limit_resources(limits: Limits):
         import resource
 
         resource.setrlimit(resource.RLIMIT_CPU, (limits.render_timeout * limits.ffmpeg_threads, limits.render_timeout * limits.ffmpeg_threads))
-        resource.setrlimit(resource.RLIMIT_AS, (limits.memory_bytes, limits.memory_bytes))
+        resource.setrlimit(resource.RLIMIT_AS, (limits.address_space_bytes, limits.address_space_bytes))
         resource.setrlimit(resource.RLIMIT_FSIZE, (limits.output_bytes, limits.output_bytes))
         os.nice(5)
 
@@ -282,9 +284,10 @@ def build_ffmpeg_args(cfg: Config, clips: list[Path], durations: list[float], ou
                       f"enable='gte(t\\,{start:.3f})'[cta]")
         last = "cta"
     chains.append(f"[{last}]format=yuv420p[vout]")
-    args += ["-filter_complex", ";".join(chains), "-map", "[vout]", "-map", f"{audio_index}:a",
+    threads = str(cfg.limits.ffmpeg_threads)
+    args += ["-filter_threads", threads, "-filter_complex_threads", threads, "-filter_complex", ";".join(chains), "-map", "[vout]", "-map", f"{audio_index}:a",
              "-c:v", "libx264", "-preset", "medium", "-profile:v", "high", "-level:v", "4.2", "-pix_fmt", "yuv420p",
-             "-r", str(fps), "-g", str(fps * 2), "-crf", "20", "-threads", str(cfg.limits.ffmpeg_threads),
+             "-r", str(fps), "-g", str(fps * 2), "-crf", "20", "-threads", threads,
              "-c:a", "aac", "-b:a", "128k", "-ar", "48000", "-ac", "2",
              "-t", f"{total}", "-movflags", "+faststart", "-map_metadata", "-1", str(out)]
     return args

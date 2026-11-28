@@ -138,7 +138,8 @@ class StoreAndHttpTests(unittest.TestCase):
             with urllib.request.urlopen(req, timeout=10) as res:
                 return res.status, json.loads(res.read())
         except urllib.error.HTTPError as e:
-            return e.code, json.loads(e.read())
+            with e:
+                return e.code, json.loads(e.read())
 
     def test_requires_the_token(self):
         self.assertEqual(self.call("/jobs/" + "0" * 32, token="wrong")[0], 401)
@@ -207,6 +208,7 @@ class RenderTests(unittest.TestCase):
             job, _ = store.create(w.validate_request(request(clips=[f"{base}/c0.mp4", f"{base}/c1.mp4"], logo=f"{base}/logo.png"), cfg.limits))
             result = w.Runner(cfg, store).process(job["id"])
             server.shutdown()
+            server.server_close()
             self.assertEqual(result["state"], "completed", result.get("error"))
             out = result["report"]["output"]
             self.assertEqual((out["width"], out["height"], out["fps"], out["videoCodec"], out["audioCodec"]), (1080, 1920, "30/1", "h264", "aac"))
