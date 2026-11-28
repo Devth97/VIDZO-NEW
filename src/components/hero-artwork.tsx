@@ -6,7 +6,7 @@ export function HeroArtwork() {
       <figcaption><span>01 / THE PRODUCT</span>A little more unexpected.</figcaption>
     </figure>
     <figure className="hero-art hero-art-lifestyle">
-      <img src="/assets/hero/citrus-lifestyle-480.webp" srcSet="/assets/hero/citrus-lifestyle-240.webp 240w, /assets/hero/citrus-lifestyle-480.webp 480w" sizes="(min-width: 1200px) 180px, 80px" width={480} height={720} alt="AI concept: the same citrus drink held beside a sunlit tennis court"/>
+      <img src="/assets/hero/citrus-lifestyle-v2-480.webp" srcSet="/assets/hero/citrus-lifestyle-v2-240.webp 240w, /assets/hero/citrus-lifestyle-v2-480.webp 480w" sizes="(min-width: 1200px) 180px, 80px" width={480} height={720} alt="AI concept: the same citrus drink held beside a sunlit tennis court"/>
       <figcaption><span>02 / THE MOMENT</span>A story of its own.</figcaption>
     </figure>
     <p className="hero-art-note">One product.<br/><strong>More possibilities.</strong><small>AI concept artwork<br/>Not a VIDZO video result</small></p>

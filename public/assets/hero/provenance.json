@@ -25,8 +25,8 @@
     {
       "name": "citrus-lifestyle",
       "files": [
-        "citrus-lifestyle-240.webp",
-        "citrus-lifestyle-480.webp"
+        "citrus-lifestyle-v2-240.webp",
+        "citrus-lifestyle-v2-480.webp"
       ],
       "dimensions": [
         [
@@ -38,7 +38,9 @@
           720
         ]
       ],
-      "prompt": "Use case: ads-marketing. Generate a second original editorial campaign photograph, portrait 2:3, using the previous generated bottle image only as a product continuity reference. Keep the exact squat amber glass bottle, deep olive ribbed screw cap, orange drink and unprinted ivory paper label. Entirely different composition: candid outdoor editorial photograph cropped from a real adult woman's shoulder to hip (face outside frame), wearing an oversized crisp ivory cotton shirt, sleeve casually rolled, her anatomically natural hand holding that exact bottle down by her side. Bottle fully visible, label front-facing, warm sun catching condensation. Background deep olive painted tennis-court fence softly out of focus, one warm orange court stripe in lower background. Afternoon hard natural light, believable skin creases, imperfect shirt texture and subtle analog grain. Shot on 85mm lens, unforced magazine campaign feel with rich olive shadows and luminous orange glass. No floating objects, no water ribbons in this second image, no text, letters, logos, badges, interface, watermark, CGI/plastic skin or stock-photo poses. Keep her hand realistic with five fingers and a physically plausible grip. The image should feel observed, energetic and photographic, not a staged beige beauty ad."
+      "prompt": "Use case: ads-marketing. Generate a second original editorial campaign photograph, portrait 2:3, using the previous generated bottle image only as a product continuity reference. Keep the exact squat amber glass bottle, deep olive ribbed screw cap, orange drink and unprinted ivory paper label. Entirely different composition: candid outdoor editorial photograph cropped from a real adult woman's shoulder to hip (face outside frame), wearing an oversized crisp ivory cotton shirt, sleeve casually rolled, her anatomically natural hand holding that exact bottle down by her side. Bottle fully visible, label front-facing, warm sun catching condensation. Background deep olive painted tennis-court fence softly out of focus, one warm orange court stripe in lower background. Afternoon hard natural light, believable skin creases, imperfect shirt texture and subtle analog grain. Shot on 85mm lens, unforced magazine campaign feel with rich olive shadows and luminous orange glass. No floating objects, no water ribbons in this second image, no text, letters, logos, badges, interface, watermark, CGI/plastic skin or stock-photo poses. Keep her hand realistic with five fingers and a physically plausible grip. The image should feel observed, energetic and photographic, not a staged beige beauty ad.",
+      "revision": "Corrected hand anatomy with built-in imagegen; inspected full-size: one thumb, four fingers, no duplicated digits or fingers under bottle.",
+      "editPrompt": "Edit the attached citrus-drink lifestyle photograph. Correct ONLY the malformed hand and wrist holding the bottle. Replace the whole visible grip with ONE anatomically correct adult woman's hand seamlessly connected to the existing forearm: exactly five fingers total, one thumb and four fingers, correct joints, natural nails and proportions. Use a simple relaxed side grip around the bottle: one thumb rests along the viewer-left side of the label, four fingers wrap around the back of the bottle with only their natural ends visible at the viewer-right edge. No fingers underneath the base, no second thumb, no duplicated nails, no extra hand or limb. Reconstruct the grip rather than retaining any of the malformed digits. The bottle stays upright with its entire label visible. Preserve the exact amber bottle silhouette, orange drink, deep olive cap, blank ivory label, size and position. Preserve the ivory shirt, composition, woman's body, lighting, skin tone, olive tennis-court background, shadows, color grade and photographic texture. No text or logos. Inspect the anatomy carefully: one wrist, one palm, one thumb, four fingers. Photorealistic retouch with a physically credible grasp."
     }
   ]
 }
