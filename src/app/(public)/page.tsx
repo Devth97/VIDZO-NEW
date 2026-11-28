@@ -7,6 +7,7 @@ import { FormatLibrary } from '@/components/format-library';
 import { WhyBento } from '@/components/magic/why-bento';
 import { GridPattern } from '@/components/magic/grid-pattern';
 import { CreativeWorkspace } from '@/components/creative-workspace';
+import { CreativePlayground } from '@/components/creative-playground';
 import { placeholderPricing } from '@/lib/domain/pricing';
 import { rupees } from '@/lib/domain/schema';
 
@@ -24,6 +25,7 @@ export default function Home() {
   return <div className="editorial-home workspace-home">
     <CreativeWorkspace/>
     <FeatureTicker/>
+    <CreativePlayground/>
     <section className="editorial-section formats-section" id="formats"><div className="playful-head"><p className="eyebrow">Ad formats</p><h2>Start from a structure<br/><em>that already works.</em></h2><p>Pick a format to fill in your brief with its scenes. Every line stays editable, and you bring the product, the reference and the direction.</p></div>
       <FormatLibrary/>
     </section>

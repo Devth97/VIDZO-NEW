@@ -35,5 +35,6 @@ export function DecodeWord({ words, hold = 2600 }: { words: string[]; hold?: num
     return () => { clearInterval(timer); clearTimeout(raf); };
   }, [index, reduce, words, hold]);
 
-  return <><span className="sr-only">{words[0]}</span><span className="decode-word" aria-hidden="true">{shown}</span></>;
+  const widest = words.reduce((longest, word) => word.length > longest.length ? word : longest, '');
+  return <span className="decode-word-wrap"><span className="sr-only">{words[0]}</span><span className="decode-word-sizer" aria-hidden="true">{widest}</span><span className="decode-word" aria-hidden="true">{shown}</span></span>;
 }

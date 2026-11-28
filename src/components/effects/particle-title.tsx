@@ -64,6 +64,7 @@ export function ParticleTitle({ text }: { text: string }) {
         ctx.fillStyle = d.lime ? '#9cc22a' : '#3e5035';
         ctx.fillRect(d.x - .9, d.y - .9, 1.8, 1.8);
       }
+      c.dataset.ready = 'true';
     };
 
     document.fonts?.ready.then(() => {

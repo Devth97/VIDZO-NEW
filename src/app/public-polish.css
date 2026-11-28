@@ -1,4 +1,4 @@
-/* Public marketing surfaces share a quieter paper-and-olive finish.
+/* Public marketing spacing, typography and readable paper-and-olive surfaces.
    Keep these tokens scoped so the private studio retains its own interface. */
 .public-frame {
   --canvas: #f8f6ef;
@@ -30,8 +30,6 @@
 .public-frame .public-header nav .button.primary:hover { color: #fffefa; background: #35472c; border-color: #35472c; box-shadow: none; transform: none; }
 .public-frame .button.secondary { border-color: #c4cab8; background: var(--surface); box-shadow: none; }
 .public-frame .button.secondary:hover:not(:disabled) { background: #edf1e5; border-color: #879678; box-shadow: none; transform: none; }
-.public-frame .shimmer::after { content: none; animation: none; }
-.public-frame .border-beam { display: none; animation: none; }
 
 .public-frame .creative-entry { padding-block: 44px 44px; }
 .public-frame .entry-kicker { margin-block-end: 20px; }
@@ -76,7 +74,6 @@
 .public-frame .format-use:hover { background: #e9efdf; box-shadow: none; transform: none; }
 .public-frame .spotlight-card { background: var(--surface); border-color: #ddded2; border-radius: 20px; padding: 28px; }
 .public-frame .spotlight-card:hover { box-shadow: 0 8px 24px #29332108; border-color: #aab99a; transform: none; }
-.public-frame .spotlight-card::before { background: none; }
 .public-frame .spotlight-card h3 { font-size: 1.1875rem; }
 .public-frame .spotlight-card p { line-height: 1.75; }
 .public-frame .step-cards li { border-color: #ddded2; background: #f7f3e9; padding: 28px; gap: 14px; }

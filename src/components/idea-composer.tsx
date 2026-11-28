@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowUpRight, ChevronDown, ImagePlus, ArrowRight, Plus, Check } from 'lucide-react';
 import { objectives, saveDraftIntent, type Objective } from '@/lib/draft-intent';
 import { ErrorMessage } from './ui';
+import { BorderBeam } from './magic/border-beam';
 
 const starters: { label: string; idea: string; objective: Objective }[] = [
   { label: 'A product reveal', idea: 'A close-up product reveal. Start with the details, then show the product in use.', objective: 'Product launch' },
@@ -28,7 +29,7 @@ export function IdeaComposer() {
   }
   return <div className="idea-composer-wrap">
     <form className="idea-composer" onSubmit={submit} aria-labelledby={id + '-label'} aria-busy={busy}>
-      <span className="border-beam" aria-hidden="true"/>
+      <BorderBeam/>
       <label id={id + '-label'} htmlFor={id + '-idea'}>Describe your ad</label>
       <textarea id={id + '-idea'} name="direction" ref={input} rows={2} maxLength={2000} value={idea} onChange={e => setIdea(e.target.value)} placeholder="What’s the idea? A product reveal, a different cast, a fresh take on a reference…" aria-describedby={id + '-help'}/>
       <div className="idea-details" id={id + '-details'} hidden={!details}>
