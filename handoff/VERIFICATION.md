@@ -1,5 +1,18 @@
 # Verification log
 
+## 28 November 2026 — Slice 3 part 1: media worker (Claude)
+
+| Check | Result |
+| --- | --- |
+| `python -m unittest discover -s services/media-worker/tests` (CI, Ubuntu `ffmpeg 8.0.1-3ubuntu2`) | Passed: 13 tests, none skipped. The render test encodes synthetic portrait (720×1280) and landscape (1280×720) test-pattern clips plus a logo. It produces 1080×1920, 30/1 fps, H.264 yuv420p, AAC, 5.0 s ±0.15 s; it decodes cleanly, reports the upscaling, and deletes the inputs |
+| Same suite locally (Windows, no FFmpeg) | 12 passed, render skipped |
+| Fixed during CI | x264 `malloc failed` under a 3 GB `RLIMIT_AS`. FFmpeg 8 reserves far more virtual memory than it uses, so RAM is now left to the container limit and `RLIMIT_AS` is a 16 GB runaway guard; filter threads are capped |
+| App side | `tests/worker-adapter.test.ts` covers the submit contract, missing clips, unknown submissions, safe failure reasons, the report stored on the export, and reconciliation. A CTA over 80 characters blocks the export quote |
+| Gates | typecheck, 87 tests, both builds and the Cloudflare typecheck passed; GitHub run "Verify and deploy VIDZO" succeeded |
+| Not verified | No container host yet, so nothing ran on real infrastructure, behind TLS, or with real R2 signed URLs and generated clips. Resource limits on Linux are exercised only in CI |
+
+Slice 2 in production: after the cron trigger was deployed (07:57 UTC), `https://vidzo.tech/api/health` reported `runnerAgeSeconds: 2` at 08:02 UTC. It stayed under 30 s after the following redeploy.
+
 ## 28 November 2026 — Slice 2: durable job runner (Claude)
 
 | Check | Result |
