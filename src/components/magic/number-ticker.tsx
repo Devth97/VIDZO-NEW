@@ -7,9 +7,16 @@ export function NumberTicker({ value, className }: { value: number; className?: 
   const ref = useRef<HTMLSpanElement>(null);
   const reduce = useReducedMotion();
   const inView = useInView(ref, { once: true, margin: '-40px' });
-  const mv = useMotionValue(reduce ? value : 0);
+  const mv = useMotionValue(0);
   const spring = useSpring(mv, { damping: 40, stiffness: 120 });
-  useEffect(() => { if (inView) mv.set(value); }, [inView, mv, value]);
-  useEffect(() => spring.on('change', v => { if (ref.current) ref.current.textContent = Math.round(v).toLocaleString('en-IN'); }), [spring]);
-  return <span ref={ref} className={className} style={{ fontVariantNumeric: 'tabular-nums' }}>{reduce ? value.toLocaleString('en-IN') : 0}</span>;
+  useEffect(() => { if (inView && !reduce) mv.set(value); }, [inView, mv, value, reduce]);
+  useEffect(() => {
+    if (reduce) {
+      if (ref.current) ref.current.textContent = value.toLocaleString('en-IN');
+      return;
+    }
+    return spring.on('change', v => { if (ref.current) ref.current.textContent = Math.round(v).toLocaleString('en-IN'); });
+  }, [spring, reduce, value]);
+  // Keep the first server and client render identical; preferences apply after hydration.
+  return <span ref={ref} className={className} style={{ fontVariantNumeric: 'tabular-nums' }}>{0}</span>;
 }
